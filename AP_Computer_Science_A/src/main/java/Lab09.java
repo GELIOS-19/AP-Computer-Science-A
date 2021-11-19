@@ -80,8 +80,13 @@ public class Lab09 {
   }
 
   private static int play(int currentBankBalance) {
+    // User Variables
+    int diceRollResult
+    CoinFlip coinFlipChoice;
+    Colors colorChoice;
+    
     // Game Results
-    int diceRollResult = (int)((Math.random() * 5) + 1);
+    diceRollResult = (int)((Math.random() * 5) + 1);
 
     CoinFlip coinFlipResult;
     if ((int)(Math.random() * 100) % 2 == 0) {
@@ -97,7 +102,6 @@ public class Lab09 {
     int diceRollChoice = scanner.nextInt();
 
     System.out.println("What Is Your Choice On The Coin Flip? >>> ");
-    CoinFlip coinFlipChoice;
     switch (scanner.next().toUpperCase(Locale.ROOT).charAt(0)) {
       case 'H':
         coinFlipChoice = CoinFlip.HEADS;
@@ -106,7 +110,6 @@ public class Lab09 {
     }
 
     System.out.println("What Is Your Choice On The Color Spinner? >>> ");
-    Colors colorChoice;
     switch (scanner.next().toUpperCase(Locale.ROOT).charAt(0)) {
       case 'R':
         colorChoice = Colors.RED;
