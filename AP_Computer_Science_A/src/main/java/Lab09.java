@@ -81,12 +81,12 @@ public class Lab09 {
 
   private static int play(int currentBankBalance) {
     // User Variables
-    int diceRollResult
+    int diceRollChoice;
     CoinFlip coinFlipChoice;
     Colors colorChoice;
     
     // Game Results
-    diceRollResult = (int)((Math.random() * 5) + 1);
+    int diceRollResult = (int)((Math.random() * 5) + 1);
 
     CoinFlip coinFlipResult;
     if ((int)(Math.random() * 100) % 2 == 0) {
@@ -99,7 +99,7 @@ public class Lab09 {
 
     // Game Choices
     System.out.println("What Is Your Choice On The Dice Roll? >>> ");
-    int diceRollChoice = scanner.nextInt();
+    diceRollChoice = scanner.nextInt();
 
     System.out.println("What Is Your Choice On The Coin Flip? >>> ");
     switch (scanner.next().toUpperCase(Locale.ROOT).charAt(0)) {
