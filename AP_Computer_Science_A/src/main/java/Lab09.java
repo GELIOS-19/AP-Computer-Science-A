@@ -104,7 +104,7 @@ public class Main {
 
     // Take Input
     System.out.print("How Much Money Would You Like To Deposit? >>> ");
-    amountDeposit = scanner.nextInt();
+    amountDeposit = scanner.nextDouble();
 
     // Return New Bank Balance
     newBankBalance = currentBankBalance + amountDeposit;
@@ -113,18 +113,18 @@ public class Main {
 
   private static double play(double currentBankBalance) {
     // User Variables
-    int betAmount;
+    double betAmount;
     int diceRollChoice;
     CoinFlip coinFlipChoice;
     Colors colorChoice;
 
     // User Input
     System.out.print("How Much Money Would You Like To Bet? >>> ");
-    betAmount = scanner.nextInt();
+    betAmount = scanner.nextDouble();
 
     while (betAmount > currentBankBalance) {
       System.out.print("Please Enter A Valid Amount That Is At Most $" + currentBankBalance + ". >>> ");
-      betAmount = scanner.nextInt();
+      betAmount = scanner.nextDouble();
     }
 
     currentBankBalance -= betAmount;
