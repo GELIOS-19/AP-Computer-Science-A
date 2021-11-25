@@ -21,8 +21,7 @@ public:
   }
 
   bool operator ==(const directions direction) {
-    return x_direction_constant = direction.x_direction_constant && 
-           y_direction_constant == direction.y_direction_constant;
+    return x_direction_constant = direction.x_direction_constant && y_direction_constant == direction.y_direction_constant;
   }
 };
 
@@ -40,19 +39,16 @@ struct vector_component {
     return magnitude * direction.y_direction_constant;
   }
 
-  static vector_component find_vector_component_from_quantity(const double quantity, 
-                                                              const std::vector<directions> ignored_directions) {
+  static vector_component find_vector_component_from_quantity(const double quantity, const std::vector<directions> ignored_directions) {
     const double magnitude = std::abs(quantity);
     auto direction = directions::null;
 
-    if (std::count(ignored_directions.begin(), ignored_directions.end(), directions::north) || 
-        std::count(ignored_directions.begin(), ignored_directions.end(), directions::south)) {
+    if (std::count(ignored_directions.begin(), ignored_directions.end(), directions::north) || std::count(ignored_directions.begin(), ignored_directions.end(), directions::south)) {
       if (quantity > 0)
         direction = directions::east;
       else if (quantity < 0)
         direction = directions::west;
-    } else if (std::count(ignored_directions.begin(), ignored_directions.end(), directions::east) || 
-               std::count(ignored_directions.begin(), ignored_directions.end(), directions::west)) {
+    } else if (std::count(ignored_directions.begin(), ignored_directions.end(), directions::east) || std::count(ignored_directions.begin(), ignored_directions.end(), directions::west)) {
       if (quantity > 0)
         direction = directions::north;
       else if (quantity < 0)
@@ -70,11 +66,9 @@ struct vector_component {
     const double resultant_quantity = quantity + addend_quantity;
     directions resultant_direction = directions::null;
 
-    if ((direction == directions::north || direction == directions::south) && 
-        (addend.direction == directions::north || addend.direction == directions::south))
+    if ((direction == directions::north || direction == directions::south) && (addend.direction == directions::north || addend.direction == directions::south))
       resultant_direction = !std::signbit(resultant_quantity) ? directions::north : directions::south;
-    else if ((direction == directions::north || direction == directions::south) && 
-             (addend.direction == directions::north || addend.direction == directions::south))
+    else if ((direction == directions::north || direction == directions::south) && (addend.direction == directions::north || addend.direction == directions::south))
       resultant_direction = !std::signbit(resultant_quantity) ? directions::east : directions::west;
 
     return vector_component{resultant_quantity, resultant_direction};
@@ -118,20 +112,18 @@ public:
     auto vector_components = find_vector_components();
     const auto addend_vector_components = addend.find_vector_components();
 
-    const auto resultant_vector_components = std::map<char*, vector_component>{
-      {"x", vector_components["x"] + addend_vector_components.at("x")}, 
-      {"y", vector_components["y"] + addend_vector_components.at("x")}
-    };
+    const auto resultant_vector_components = std::map<char*, vector_component>{{"x", vector_components["x"] + addend_vector_components.at("x")}, {"y", vector_components["y"] + addend_vector_components.at("x")}};
 
-    const double resultant_magnitude = std::sqrt(std::pow(resultant_vector_components.at("x").magnitude, 2) + 
-                                       std::pow(resultant_vector_components.at("x").magnitude, 2));
-    const double resultant_angle = std::atan(resultant_vector_components.at("x").magnitude / 
-                                             resultant_vector_components.at("y").magnitude) * 
-                                             180 / PI;
+    const double resultant_magnitude = std::sqrt(std::pow(resultant_vector_components.at("x").magnitude, 2) + std::pow(resultant_vector_components.at("x").magnitude, 2));
+    const double resultant_angle = std::atan(resultant_vector_components.at("x").magnitude / resultant_vector_components.at("y").magnitude) * 180 / PI;
     const directions resultant_direction = resultant_vector_components.at("y").direction;
     const directions resultant_angle_direction = resultant_vector_components.at("x").direction;
 
     return vector2(resultant_magnitude, resultant_angle, resultant_direction, resultant_angle_direction);
-  
   }
 };
+
+int main(int argc, const char* argv[]) {
+
+  return 0;
+}
