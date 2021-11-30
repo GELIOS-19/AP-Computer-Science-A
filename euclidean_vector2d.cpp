@@ -15,8 +15,16 @@ namespace chess {
 ////////////////////////////////////////////////////////////
 namespace engine {
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Contains private items 
+    ///
+    ////////////////////////////////////////////////////////////
     namespace priv {
 
+        ////////////////////////////////////////////////////////////
+        /// \brief Contains functionality dealing with windows 
+        ///
+        ////////////////////////////////////////////////////////////
         namespace window {
 
             ////////////////////////////////////////////////////////////
@@ -36,6 +44,10 @@ namespace engine {
 
     } // namespace priv
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Contains functionality dealing with windows 
+    ///
+    ////////////////////////////////////////////////////////////
     namespace window {
 
         ////////////////////////////////////////////////////////////
@@ -53,7 +65,13 @@ namespace engine {
         /// \param makeResizable Indicates if the window should be made resizable
         ///
         ////////////////////////////////////////////////////////////
-        static GLFWwindow* createWindow(const int windowWidth, const int windowHeight, const std::string windowTitle, int frameBufferWidth, int frameBufferHeight, const bool makeResizable)
+        static GLFWwindow* createWindow(
+            const int windowWidth,
+            const int windowHeight,
+            const std::string windowTitle,
+            int frameBufferWidth,
+            int frameBufferHeight,
+            const bool makeResizable)
         {
             // Set window hints
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -62,7 +80,12 @@ namespace engine {
             glfwWindowHint(GLFW_RESIZABLE, makeResizable ? GL_TRUE : GL_FALSE);
 
             // Create window
-            GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowTitle.c_str(), nullptr, nullptr);
+            GLFWwindow* window = glfwCreateWindow(
+                windowWidth,
+                windowHeight,
+                windowTitle.c_str(),
+                nullptr,
+                nullptr);
 
             // Set frame buffer properties
             if (makeResizable) {
@@ -113,8 +136,10 @@ namespace engine {
             if (window != glfwGetCurrentContext())
                 glfwMakeContextCurrent(window);
 
-            // Clear the window
+            // Clear with color
             glClearColor(0.f, 0.f, 0.f, 1.f); // The color used here does not matter
+
+            // Clear buffers
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
 
