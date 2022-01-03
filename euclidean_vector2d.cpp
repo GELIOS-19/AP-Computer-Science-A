@@ -28,63 +28,63 @@ Board::Board(uint16_t sideLength)
   }
 
   // initialize winning indices sets
-  std::vector<std::vector<uint16_t>> hSets; // represents list of lists of horizontal indices
-  std::vector<std::vector<uint16_t>> vSets; // represents list of lists of vertical indices
-  std::vector<std::vector<uint16_t>> dSets; // represents list of lists of diagonal indices
+  std::vector<std::vector<uint16_t>> horizontalIndicesSets; // represents list of lists of horizontal indices
+  std::vector<std::vector<uint16_t>> verticalIndicesSets; // represents list of lists of vertical indices
+  std::vector<std::vector<uint16_t>> diagonalIndicesSets; // represents list of lists of diagonal indices
 
   // get all lists of horizontal indices
-  std::vector<uint16_t> hSet;
+  std::vector<uint16_t> horizontalIndicesSet;
 
   for (uint16_t index = 0; index < this->totalSquares_; index++) {
-    hSet.push_back(index);
-    if (hSet.size() == this->sideLength_) {
-      hSets.push_back(hSet);
-      hSet.clear();
+    horizontalIndicesSet.push_back(index);
+    if (horizontalIndicesSet.size() == this->sideLength_) {
+      horizontalIndicesSets.push_back(horizontalIndicesSet);
+      horizontalIndicesSet.clear();
     }
   }
 
   // get all lists of vertical indices
-  std::vector<uint16_t> vSet;
+  std::vector<uint16_t> verticalIndicesSet;
 
   for (uint16_t index = 0; index < this->sideLength_; index++) {
-    for (const auto &hSet_ : hSets) {
-      vSet.push_back(hSet_[index]);
-      if (vSet.size() == this->sideLength_) {
-        vSets.push_back(vSet);
-        vSet.clear();
+    for (const auto &horizontalIndicesSet_ : horizontalIndicesSets) {
+      verticalIndicesSet.push_back(horizontalIndicesSet_[index]);
+      if (verticalIndicesSet.size() == this->sideLength_) {
+        verticalIndicesSets.push_back(verticalIndicesSet);
+        verticalIndicesSet.clear();
       }
     }
   }
 
   // get all lists of diagonal indices
-  std::vector<uint16_t> dSet;
+  std::vector<uint16_t> diagonalIndicesSet;
 
-  for (uint64_t index = 0; index < hSets.size(); index++) {
-    auto &hSet_ = hSets[index];
-    dSet.push_back(hSet_[index]);
+  for (uint64_t index = 0; index < horizontalIndicesSets.size(); index++) {
+    auto &horizontalIndicesSet_ = horizontalIndicesSets[index];
+    diagonalIndicesSet.push_back(horizontalIndicesSet_[index]);
   }
 
-  dSets.push_back(dSet);
-  dSet.clear();
+  diagonalIndicesSets.push_back(diagonalIndicesSet);
+  diagonalIndicesSet.clear();
 
-  for (uint64_t index = 0; index < hSets.size(); index++) {
-    auto &hSet_ = hSets[index];
-    dSet.push_back(hSet_[hSet.size() - (index + 1)]);
+  for (uint64_t index = 0; index < horizontalIndicesSets.size(); index++) {
+    auto &horizontalIndicesSet_ = horizontalIndicesSets[index];
+    diagonalIndicesSet.push_back(horizontalIndicesSet_[horizontalIndicesSet.size() - (index + 1)]);
   }
 
-  dSets.push_back(dSet);
+  diagonalIndicesSets.push_back(diagonalIndicesSet);
 
   // add all the lists of indices to the winning indices sets
-  for (auto &hSet_ : hSets) {
-    this->winningIndicesSets_.push_back(hSet_);
+  for (auto &horizontalIndicesSet_ : horizontalIndicesSets) {
+    this->winningIndicesSets_.push_back(horizontalIndicesSet_);
   }
 
-  for (auto &vSet_ : vSets) {
-    this->winningIndicesSets_.push_back(vSet_);
+  for (auto &verticalIndicesSet_ : verticalIndicesSets) {
+    this->winningIndicesSets_.push_back(verticalIndicesSet_);
   }
 
-  for (auto &dSet_ : dSets) {
-    this->winningIndicesSets_.push_back(dSet_);
+  for (auto &diagonalIndicesSet_ : diagonalIndicesSets) {
+    this->winningIndicesSets_.push_back(diagonalIndicesSet_);
   }
 }
 
