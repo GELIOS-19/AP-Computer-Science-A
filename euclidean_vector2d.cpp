@@ -155,4 +155,3 @@ namespace core::models
 	}
 
 } // namespace core::models
-s
