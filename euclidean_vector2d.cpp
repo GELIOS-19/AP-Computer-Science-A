@@ -141,9 +141,9 @@ namespace core::models
 	{
 		std::stringstream ss;
 		ss << "{"
-			  "\"sideLength\": " << this->sideLength_ << ","
-			  "\"totalSquares\": " << this->totalSquares_ << ","
-			  "\"boardSquares\": {";
+		"\"sideLength\": " << this->sideLength_ << ","
+		"\"totalSquares\": " << this->totalSquares_ << ","
+		"\"boardSquares\": {";
 		for (const BoardSquare *bs: boardSquares_)
 			ss << "\"BoardSquare@index=" << bs->getIndex() << "\": " << bs->toJSONString() << ",";
 		ss << "}";
