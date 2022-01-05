@@ -1,157 +1,102 @@
-//
-// Created by Slend on 1/2/2022.
-//
-
 #include "Board.h"
 
+namespace core::models {
 
-namespace core::models
-{
+Board::Board()
+  : m_SideLength(3) {
+  for (int32_t idx = 0; idx < 9; idx++)
+    m_BoardSquares.push_back(new BoardSquare(idx, false, nullptr));
+}
 
-	std::vector<std::vector<uint16_t>> Board::initWinningIndicesSets_(uint16_t sideLength, uint16_t totalSquares)
-	{
-		std::vector<std::vector<uint16_t>> hSets; // represents list of lists of horizontal indices
-		hSets.reserve(sideLength);
+Board::Board(const uint16_t side_length)
+  : m_SideLength(side_length) {
+  for (int32_t idx = 0; idx < pow(m_SideLength, 2); idx++)
+    m_BoardSquares.push_back(new BoardSquare(idx, false, nullptr));
+}
 
-		// get all lists of horizontal indices
-		std::vector<uint16_t> hSet;
+Board::~Board() {
+  for (auto it = m_BoardSquares.begin(); it != m_BoardSquares.end(); ++it) {
+    delete *it;
+    it = m_BoardSquares.erase(it);
+  }
+}
 
-		for (uint16_t index = 0; index < totalSquares; index++)
-		{
-			hSet.push_back(index);
-			if (hSet.size() == sideLength)
-			{
-				hSets.push_back(hSet);
-				hSet.clear();
-			}
-		}
+uint16_t Board::GetSideLength() const {
+  return m_SideLength;
+}
 
-		std::vector<std::vector<uint16_t>> vSets; // represents list of lists of vertical indices
-		vSets.reserve(sideLength);
+std::vector<BoardSquare *> Board::GetBoardSquares() const {
+  return m_BoardSquares;
+}
 
-		// get all lists of vertical indices
-		std::vector<uint16_t> vSet;
+std::string Board::JSONString() const {
+  std::stringstream string_stream;
 
-		for (uint16_t index = 0; index < sideLength; index++)
-		{
-			for (const auto& hSetTemp : hSets)
-			{
-				vSet.push_back(hSetTemp[index]);
-				if (vSet.size() == sideLength)
-				{
-					vSets.push_back(vSet);
-					vSet.clear();
-				}
-			}
-		}
+  string_stream << "{"
+      "\"side_length\":" << m_SideLength << ","
+      "\"board_squares\": [";
 
-		std::vector<std::vector<uint16_t>> dSets; // represents list of lists of diagonal indices
-		dSets.reserve(sideLength);
+  for (const auto &board_square : m_BoardSquares)
+    string_stream << board_square->JSONString() << ",";
 
-		// get all lists of diagonal indices
-		std::vector<uint16_t> dSet;
+  string_stream << "],}";
 
-		for (uint64_t index = 0; index < hSets.size(); index++)
-		{
-			auto& hSetTemp = hSets[index];
-			dSet.push_back(hSetTemp[index]);
-		}
+  return string_stream.str();
+}
 
-		dSets.push_back(dSet);
-		dSet.clear();
+std::vector<std::vector<uint16_t>> Board::GenerateWinIndices_() const {
+  // get list of lists of horizontal indices
+  std::vector<std::vector<uint16_t>> horiz_ll; // represents list of lists of horizontal indices
+  horiz_ll.reserve(m_SideLength);
+  std::vector<uint16_t> horiz_l; // represents list of horizontal indices
+  for (uint16_t idx = 0; idx < pow(m_SideLength, 2); idx++) {
+    horiz_l.push_back(idx);
+    if (horiz_l.size() == m_SideLength) {
+      horiz_ll.push_back(horiz_l);
+      horiz_l.clear();
+    }
+  }
 
-		for (uint64_t index = 0; index < hSets.size(); index++)
-		{
-			auto& hSetTemp = hSets[index];
-			dSet.push_back(hSetTemp[hSet.size() - (index + 1)]);
-		}
+  // get list of lists of vertical indices
+  std::vector<std::vector<uint16_t>> vert_ll; // represents list of lists of vertical indices
+  vert_ll.reserve(m_SideLength);
+  std::vector<uint16_t> vert_l; // represents list of vertical indices
+  for (uint16_t idx = 0; idx < m_SideLength; idx++)
+    for (const auto &horiz_l_temp : horiz_ll) {
+      vert_l.push_back(horiz_l_temp[idx]);
+      if (vert_l.size() == m_SideLength) {
+        vert_ll.push_back(vert_l);
+        vert_l.clear();
+      }
+    }
 
-		dSets.push_back(dSet);
+  // get list of lists of diagonal indices
+  std::vector<std::vector<uint16_t>> diag_ll; // represents list of lists of diagonal indices
+  diag_ll.reserve(m_SideLength);
+  std::vector<uint16_t> diag_l; // represents list of diagonal indices
+  for (uint64_t idx = 0; idx < horiz_ll.size(); idx++) {
+    auto &horiz_l_temp = horiz_ll[idx];
+    diag_l.push_back(horiz_l_temp[idx]);
+  }
+  diag_ll.push_back(diag_l);
+  diag_l.clear();
+  for (uint64_t idx = 0; idx < horiz_ll.size(); idx++) {
+    auto &horiz_l_temp = horiz_ll[idx];
+    diag_l.push_back(horiz_l_temp[horiz_l.size() - (idx + 1)]);
+  }
+  diag_ll.push_back(diag_l);
 
-		std::vector<std::vector<uint16_t>> wSets; // represents list of lists of all indices
-		wSets.reserve(hSets.size() + vSets.size() + dSets.size());
+  // add all the lists of indices to the winning indices list
+  std::vector<std::vector<uint16_t>> win_ll; // represents list of lists of all indices
+  win_ll.reserve(horiz_ll.size() + vert_ll.size() + diag_ll.size());
+  for (auto &horiz_l_temp : horiz_ll)
+    win_ll.push_back(horiz_l_temp);
+  for (auto &vert_l_temp : vert_ll)
+    win_ll.push_back(vert_l_temp);
+  for (auto &diag_l_temp : diag_ll)
+    win_ll.push_back(diag_l_temp);
 
-		// add all the lists of indices to the winning indices sets
-		for (auto& hSetTemp : hSets) wSets.push_back(hSetTemp);
-		for (auto& vSetTemp : vSets) wSets.push_back(vSetTemp);
-		for (auto& dSetTemp : dSets) wSets.push_back(dSetTemp);
-
-		return wSets;
-	}
-
-	Board::Board() : sideLength_(3), totalSquares_(9)
-	{
-		boardSquares_.reserve(9);
-		boardSquares_[0] = new BoardSquare(0, false, nullptr);
-		boardSquares_[1] = new BoardSquare(1, false, nullptr);
-		boardSquares_[2] = new BoardSquare(2, false, nullptr);
-		boardSquares_[3] = new BoardSquare(3, false, nullptr);
-		boardSquares_[4] = new BoardSquare(4, false, nullptr);
-		boardSquares_[5] = new BoardSquare(5, false, nullptr);
-		boardSquares_[6] = new BoardSquare(6, false, nullptr);
-		boardSquares_[7] = new BoardSquare(7, false, nullptr);
-		boardSquares_[8] = new BoardSquare(8, false, nullptr);
-		winningIndicesSets_ = {{ 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 0, 3, 6 }, { 1, 4, 7 }, { 2, 5, 8 }, { 0, 4, 8 }, { 2, 4, 6 }};
-	}
-
-	Board::Board(uint16_t sideLength) : sideLength_(sideLength), totalSquares_(static_cast<uint16_t>(pow(sideLength_, 2)))
-	{
-		for (uint16_t index = 0; index < totalSquares_; index++)
-		{
-			boardSquares_[index] = new BoardSquare(index, false, nullptr);
-		}
-
-		winningIndicesSets_ = initWinningIndicesSets_(sideLength_, totalSquares_);
-	}
-
-	Board::~Board()
-	{
-		std::vector<BoardSquare*>::iterator iter;
-
-		for (iter = boardSquares_.begin(); iter != boardSquares_.end(); iter++)
-		{
-			delete *iter;
-			iter = boardSquares_.erase(iter);
-		}
-	}
-
-	std::vector<BoardSquare*> Board::getBoardSquares() const
-	{
-		return boardSquares_;
-	}
-
-	std::vector<std::vector<uint16_t>> Board::getWinningIndicesSets() const
-	{
-		return winningIndicesSets_;
-	}
-
-	uint16_t Board::getSideLength() const
-	{
-		return sideLength_;
-	}
-
-	uint16_t Board::getTotalSquares() const
-	{
-		return totalSquares_;
-	}
-
-	std::string Board::toJSONString() const
-	{
-		std::stringstream ss;
-
-		ss << "{"
-		      "\"sideLength\": " << sideLength_ << ","
-              "\"totalSquares\": " << totalSquares_ << ","
-              "\"boardSquares\": {";
-
-		for (const BoardSquare* bs : boardSquares_)
-		{
-			ss << "\"BoardSquare@index=" << bs->getIndex() << "\": " << bs->toJSONString() << ",";
-		}
-
-		ss << "}";
-
-		return ss.str();
-	}
+  return win_ll;
+}
 
 } // namespace core::models
