@@ -1,102 +1,86 @@
-#include "Board.h"
+#include <array>
+#include <cstdint>
+#include <cmath>
+#include <format>
+#include <iostream>
+#include <tuple>
+#include <vector>
 
-namespace core::models {
+#define MID_POINT_FORMULA(LEFT, RIGHT) (LEFT + RIGHT) / 2.0F
 
-Board::Board()
-  : m_SideLength(3) {
-  for (int32_t idx = 0; idx < 9; idx++)
-    m_BoardSquares.push_back(new BoardSquare(idx, false, nullptr));
-}
-
-Board::Board(const uint16_t side_length)
-  : m_SideLength(side_length) {
-  for (int32_t idx = 0; idx < pow(m_SideLength, 2); idx++)
-    m_BoardSquares.push_back(new BoardSquare(idx, false, nullptr));
-}
-
-Board::~Board() {
-  for (auto it = m_BoardSquares.begin(); it != m_BoardSquares.end(); ++it) {
-    delete *it;
-    it = m_BoardSquares.erase(it);
+template <typename Type>
+int32_t vectorFindIndex(const std::vector<Type>& vector, const Type& element) {
+  auto it = std::find(vector.begin(), vector.end(), element);
+  if (it != vector.end()) {
+    return it - vector.begin();
   }
+  return -1;
 }
 
-uint16_t Board::GetSideLength() const {
-  return m_SideLength;
+template <typename Type>
+std::vector<Type> findRange(Type begin, Type end, Type step = 1) {
+  std::vector<Type> values;
+  for (Type value = begin; value < end; value += step) {
+    values.push_back(value);
+  }
+  return values;
 }
 
-std::vector<BoardSquare *> Board::GetBoardSquares() const {
-  return m_BoardSquares;
-}
+std::tuple<float, std::vector<std::array<float, 2>>> riemannSum(
+    const auto& equation,
+    const std::array<float, 2>& range,
+    const char algorithm[],
+    const int& numberOfRectangles = 1) {
+  float sum = 0.0F;
+  std::vector<std::array<float, 2>> table;
 
-std::string Board::JSONString() const {
-  std::stringstream string_stream;
-
-  string_stream << "{"
-      "\"side_length\":" << m_SideLength << ","
-      "\"board_squares\": [";
-
-  for (const auto &board_square : m_BoardSquares)
-    string_stream << board_square->JSONString() << ",";
-
-  string_stream << "],}";
-
-  return string_stream.str();
-}
-
-std::vector<std::vector<uint16_t>> Board::GenerateWinIndices_() const {
-  // get list of lists of horizontal indices
-  std::vector<std::vector<uint16_t>> horiz_ll; // represents list of lists of horizontal indices
-  horiz_ll.reserve(m_SideLength);
-  std::vector<uint16_t> horiz_l; // represents list of horizontal indices
-  for (uint16_t idx = 0; idx < pow(m_SideLength, 2); idx++) {
-    horiz_l.push_back(idx);
-    if (horiz_l.size() == m_SideLength) {
-      horiz_ll.push_back(horiz_l);
-      horiz_l.clear();
-    }
+  const float step = abs(range[1] - range[0]) / static_cast<float>(numberOfRectangles);
+  for (const auto& value : findRange(range[0], range[1], step)) {
+    table.push_back({value, equation(value)});
   }
 
-  // get list of lists of vertical indices
-  std::vector<std::vector<uint16_t>> vert_ll; // represents list of lists of vertical indices
-  vert_ll.reserve(m_SideLength);
-  std::vector<uint16_t> vert_l; // represents list of vertical indices
-  for (uint16_t idx = 0; idx < m_SideLength; idx++)
-    for (const auto &horiz_l_temp : horiz_ll) {
-      vert_l.push_back(horiz_l_temp[idx]);
-      if (vert_l.size() == m_SideLength) {
-        vert_ll.push_back(vert_l);
-        vert_l.clear();
+  if (algorithm == "LRAM") {
+    table.erase(table.begin() + table.size() - 1);
+  } else if (algorithm == "RRAM") {
+    table.erase(table.begin());
+  } else if (algorithm == "MRAM") {
+    std::vector<std::array<float, 2>> midPointTable;
+    for (const auto& tableEntry : table) {
+      const int32_t index = vectorFindIndex(table, tableEntry);
+      try {
+        auto midPointLValue = MID_POINT_FORMULA(tableEntry.at(0), table.at(index + 1)[0]);
+        midPointTable.push_back({midPointLValue, equation(midPointLValue)});
+      } catch (...) {
+        break;
       }
     }
-
-  // get list of lists of diagonal indices
-  std::vector<std::vector<uint16_t>> diag_ll; // represents list of lists of diagonal indices
-  diag_ll.reserve(m_SideLength);
-  std::vector<uint16_t> diag_l; // represents list of diagonal indices
-  for (uint64_t idx = 0; idx < horiz_ll.size(); idx++) {
-    auto &horiz_l_temp = horiz_ll[idx];
-    diag_l.push_back(horiz_l_temp[idx]);
+    table = midPointTable.size() > 0 ? midPointTable : table;
+  } else {
+    std::cerr << std::format("\"{}\" Not a valid algorithm", algorithm);
+    exit(-1);
   }
-  diag_ll.push_back(diag_l);
-  diag_l.clear();
-  for (uint64_t idx = 0; idx < horiz_ll.size(); idx++) {
-    auto &horiz_l_temp = horiz_ll[idx];
-    diag_l.push_back(horiz_l_temp[horiz_l.size() - (idx + 1)]);
+
+  for (const auto& tableEntry : table) {
+    sum += abs(step * tableEntry[1]);
   }
-  diag_ll.push_back(diag_l);
 
-  // add all the lists of indices to the winning indices list
-  std::vector<std::vector<uint16_t>> win_ll; // represents list of lists of all indices
-  win_ll.reserve(horiz_ll.size() + vert_ll.size() + diag_ll.size());
-  for (auto &horiz_l_temp : horiz_ll)
-    win_ll.push_back(horiz_l_temp);
-  for (auto &vert_l_temp : vert_ll)
-    win_ll.push_back(vert_l_temp);
-  for (auto &diag_l_temp : diag_ll)
-    win_ll.push_back(diag_l_temp);
-
-  return win_ll;
+  return std::make_tuple(sum, table);
 }
 
-} // namespace core::models
+int main(int argc, char const* argv[]) {
+  const auto& result = riemannSum([](const float x) {
+                                     return static_cast<float>(4 * x - pow(x, 2));
+                                   },
+                                   {0, 4},
+                                   "MRAM",
+                                   100);
+  const auto& sum = std::get<0>(result);
+  const auto& table = std::get<1>(result);
+
+  printf("sum:\n...%f\ntable:\n", sum);
+  for (const auto& tableEntry : table) {
+    printf("...(%f, %f)\n", tableEntry[0], tableEntry[1]);
+  }
+
+  return 0;
+}
