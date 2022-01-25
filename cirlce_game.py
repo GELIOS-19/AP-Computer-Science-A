@@ -1,74 +1,92 @@
+# Game Dev with PyGame
+
 import math
-import random
 
 import pygame
 
 
-class Circle:
-    def __init__(self, color, x_position, y_position, radius):
+WINDOW_WIDTH, WINDOW_HEIGT = 800, 600
+FRAMERATE = 60
+
+pygame.init()
+window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGT))
+pygame.display.set_caption("Circle War")
+clock = pygame.time.Clock()
+
+
+class HitBox:
+    COLOR = (255, 0, 0)
+
+    def __init__(self, object_):
+        self.hitbox_x = object_.rectangle_x_position
+        self.hitbox_y = object_.rectangle_y_position
+        self.hitbox_length = object_.rectangle_length
+        self.hitbox_width = object_.rectangle_width
+
+    def draw_frame(self, window):
+        pygame.draw.rect(window, self.COLOR, (self.hitbox_x, self.hitbox_y, self.hitbox_length, self.hitbox_width), 1)
+
+
+class CircleEnemy:
+    def __init__(self, 
+                 initial_x_position: float, 
+                 initial_y_position: float, 
+                 radius: float, 
+                 velocity: float, 
+                 color: (float, float, float)) -> None:
+        self.x_position = initial_x_position
+        self.y_position = initial_y_position
+        self.radius = radius
+        self.velocity = velocity
         self.color = color
 
-        self.x_position = x_position
-        self.y_position = y_position
+    # standard attrs
+    @property
+    def rectangle_length(self): return self.radius * 2 
+    @property
+    def rectangle_width(self): return self.radius * 2
+    @property
+    def rectangle_x_position(self): return self.x_position - self.radius
+    @property
+    def rectangle_y_position(self): return self.y_position - self.radius
 
-        self.radius = radius
+    def draw_frame(self, window: pygame.Surface) -> None:
+        pygame.draw.circle(window, self.color, (self.x_position, self.y_position), self.radius)
 
-    def draw(self, screen):
-        pygame.draw.circle(screen, self.color, (self.x_position, self.y_position), self.radius)
+    def move_toward(self, x_coordinate: float, y_coordinate: float):
+        # reference unit circle
+        x_difference = x_coordinate - self.x_position
+        y_difference = y_coordinate - self.y_position
+        theta_angle = math.atan2(y_difference, x_difference)
+        if x_difference != 0 or y_difference != 0:
+            self.x_position += math.cos(theta_angle) * self.velocity
+            self.y_position += math.sin(theta_angle) * self.velocity
 
-    def move(self, new_x_position, new_y_position, smooth_transition=False, smooth_transition_velocity=1):
-        if not smooth_transition:
-            self.x_position = new_x_position
-            self.y_position = new_y_position
-
-        elif smooth_transition:
-            x_distance = new_x_position - self.x_position
-            y_distance = new_y_position - self.y_position
-
-            theta_angle = math.atan2(x_distance, y_distance)
-
-            if x_distance != 0 or y_distance != 0:
-                self.x_position += math.sin(theta_angle) * smooth_transition_velocity
-                self.y_position += math.cos(theta_angle) * smooth_transition_velocity
-
-
-def main(*args, **kwargs):
-    SCREEN_WIDTH = 800
-    SCREEN_HEIGHT = 600
-    FRAMERATE = 60
-
-    pygame.init()
-
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Screen")
-
-    clock = pygame.time.Clock()
-
-    circle = Circle((255, 255, 255), 100, 100, 20)
-    click_position = [circle.x_position, circle.y_position]
-
-    run_flag = True
-    while run_flag:
-
-        if pygame.mouse.get_pressed()[0]:
-            click_position = pygame.mouse.get_pos()
-
-        circle.draw(screen)
-        circle.move(click_position[0], click_position[1], smooth_transition=True, smooth_transition_velocity=5)
-        # circle.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-        pygame.display.update()
-        screen.fill((0, 0, 0))
-
-        clock.tick(FRAMERATE)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run_flag = False
-
-    pygame.quit()
-    
+    @property
+    def hitbox(self):
+        return HitBox(self)
 
 if __name__ == "__main__":
-    main()
+    RUN_FLAG = True # variable true during runtime
+
+    # make objects
+    my_circle = CircleEnemy(100, 100, 50, 1, (255, 255, 255))
+
+    # game loop
+    while RUN_FLAG:
+        # draw objects
+        my_circle.draw_frame(window)
+        my_circle.move_toward(73.23, 392.67)
+        my_circle.hitbox.draw_frame(window)
+
+        # update frame
+        pygame.display.update()
+        window.fill((0, 0, 0))
+        clock.tick(FRAMERATE)
+        
+        # check for events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                RUN_FLAG = False
+
     quit()
