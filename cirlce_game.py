@@ -26,6 +26,8 @@ class HitBox:
     def draw_frame(self, window):
         pygame.draw.rect(window, self.COLOR, (self.hitbox_x, self.hitbox_y, self.hitbox_length, self.hitbox_width), 1)
 
+    def object_in_hitbox(self, object_):
+        pass
 
 class CircleEnemy:
     def __init__(self, 
