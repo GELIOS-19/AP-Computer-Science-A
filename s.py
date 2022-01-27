@@ -1,11 +1,11 @@
 import math
 import sys
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import pygame
 
 
-class Entity:
+class Entity(ABC):
   """ Models an entity which is drawn to the window and can move
   during runtime. """
 
@@ -39,9 +39,9 @@ class Entity:
     """ Returns the height in the vertical direction. """
     return self._dims[1]
 
+  @abstractmethod
   def draw_frame(self, window) -> None:
     """ Draws the entity for a single frame. """
-    raise NotImplementedError
 
   def move_to(self, new_crds: [float, float]) -> None:
     """ Shifts the coordinates of the entity towards new desired
@@ -54,17 +54,19 @@ class Entity:
       self._crds[1] += math.sin(ang) * self._vel
 
 
-class CircleEntity(Entity, ABC):
+class CircleEntity(Entity):
   def __init__(self,
                col: (float, float, float),
                crds: [float, float],
                dims: [float, float],
                vel: float) -> None:
-    assert crds[0] == crds[1]
+    assert dims[0] == dims[1]
     super().__init__(col, crds, dims, vel)
 
   def draw_frame(self, window) -> None:
-    center_crds = [self._crds[0] + (self._dims[0] / 2), self._crds[1] + (self._dims[1] / 2)]
+    """ Overrides the `draw_frame` method. """
+    center_crds = [self._crds[0] + (self._dims[0] / 2), 
+                   self._crds[1] + (self._dims[1] / 2)]
     pygame.draw.circle(window, self._col, center_crds, self._dims[0] / 2)
 
 
@@ -82,7 +84,7 @@ def main() -> int:
   clock = pygame.time.Clock()
 
   # create game objects
-  my_circle = CircleEntity((0, 0, 0), [100, 100], (40, 40), 5)
+  my_circle = CircleEntity((0, 0, 0), [100, 100], (40, 40), 1)
 
   # game loop
   run_flag = True
