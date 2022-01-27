@@ -50,7 +50,8 @@ def _style(message: str, **kwargs: Any) -> str:
 
 
 class Error:
-  def __init__(self, object_path: List[str], message: str, stub_object: MaybeMissing[nodes.Node], runtime_object: MaybeMissing[Any], *, stub_desc: Optional[str] = None, runtime_desc: Optional[str] = None) -> None:
+  def __init__(self, object_path: List[str], message: str, stub_object: MaybeMissing[nodes.Node], runtime_object:
+  MaybeMissing[Any], *, stub_desc: Optional[str] = None, runtime_desc: Optional[str] = None) -> None:
     """Represents an error found by stubtest.
 
     :param object_path: Location of the object with the error,
@@ -116,7 +117,10 @@ class Error:
     if runtime_file:
       runtime_loc_str += " in file {}".format(Path(runtime_file))
 
-    output = [_style("error: ", color="red", bold=True), _style(self.object_desc, bold=True), " ", self.message, "\n", "Stub:", _style(stub_loc_str, dim=True), "\n", _style(self.stub_desc + "\n", color="blue", dim=True), "Runtime:", _style(runtime_loc_str, dim=True), "\n", _style(self.runtime_desc + "\n", color="blue", dim=True), ]
+    output = [_style("error: ", color="red", bold=True), _style(self.object_desc, bold=True), " ", self.message, "\n",
+              "Stub:", _style(stub_loc_str, dim=True), "\n", _style(self.stub_desc + "\n", color="blue", dim=True),
+              "Runtime:", _style(runtime_loc_str, dim=True), "\n",
+              _style(self.runtime_desc + "\n", color="blue", dim=True), ]
     return "".join(output)
 
 
@@ -164,7 +168,8 @@ def verify(stub: MaybeMissing[nodes.Node], runtime: MaybeMissing[Any], object_pa
 
 
 @verify.register(nodes.MypyFile)
-def verify_mypyfile(stub: nodes.MypyFile, runtime: MaybeMissing[types.ModuleType], object_path: List[str]) -> Iterator[Error]:
+def verify_mypyfile(stub: nodes.MypyFile, runtime: MaybeMissing[types.ModuleType], object_path: List[str]) -> Iterator[
+  Error]:
   if isinstance(runtime, Missing):
     yield Error(object_path, "is not present at runtime", stub, runtime)
     return
@@ -173,7 +178,8 @@ def verify_mypyfile(stub: nodes.MypyFile, runtime: MaybeMissing[types.ModuleType
     return
 
   # Check things in the stub
-  to_check = set(m for m, o in stub.names.items() if not o.module_hidden and (not m.startswith("_") or hasattr(runtime, m)))
+  to_check = set(
+    m for m, o in stub.names.items() if not o.module_hidden and (not m.startswith("_") or hasattr(runtime, m)))
 
   def _belongs_to_runtime(r: types.ModuleType, attr: str) -> bool:
     obj = getattr(r, attr)
@@ -182,9 +188,10 @@ def verify_mypyfile(stub: nodes.MypyFile, runtime: MaybeMissing[types.ModuleType
       return obj_mod == r.__name__
     return not isinstance(obj, types.ModuleType)
 
-  runtime_public_contents = (runtime.__all__ if hasattr(runtime, "__all__") else [m for m in dir(runtime) if not m.startswith("_") # Ensure that the object's module is `runtime`, since in the absence of __all__ we
-                                                                                                             # don't have a good way to detect re-exports at runtime.
-                                                                                                             and _belongs_to_runtime(runtime, m)])
+  runtime_public_contents = (runtime.__all__ if hasattr(runtime, "__all__") else [m for m in dir(runtime) if
+                                                                                  not m.startswith("_")  # Ensure that the object's module is `runtime`, since in the absence of __all__ we
+                                                                                  # don't have a good way to detect re-exports at runtime.
+                                                                                  and _belongs_to_runtime(runtime, m)])
   # Check all things declared in module's __all__, falling back to our best guess
   to_check.update(runtime_public_contents)
   to_check.difference_update({"__file__", "__doc__", "__name__", "__builtins__", "__package__"})
@@ -211,7 +218,7 @@ def verify_typeinfo(stub: nodes.TypeInfo, runtime: MaybeMissing[Type[Any]], obje
   to_check = set(stub.names)
   # There's a reasonable case to be made that we should always check all dunders, but it's
   # currently quite noisy. We could turn this into a denylist instead of an allowlist.
-  to_check.update(# cast to workaround mypyc complaints
+  to_check.update(  # cast to workaround mypyc complaints
     m for m in cast(Any, vars)(runtime) if not m.startswith("_") or m in SPECIAL_DUNDERS)
 
   for entry in sorted(to_check):
@@ -305,7 +312,7 @@ def _verify_arg_default_value(stub_arg: nodes.Argument, runtime_arg: inspect.Par
       stub_type = stub_arg.variable.type or stub_arg.type_annotation
       if isinstance(stub_type, mypy.types.TypeVarType):
         stub_type = stub_type.upper_bound
-      if (runtime_type is not None and stub_type is not None # Avoid false positives for marker objects
+      if (runtime_type is not None and stub_type is not None  # Avoid false positives for marker objects
           and type(runtime_arg.default) != object and not is_subtype_helper(runtime_type, stub_type)):
         yield ('runtime argument "{}" has a default value of type {}, '
                "which is incompatible with stub argument type {}".format(runtime_arg.name, runtime_type, stub_type))
@@ -358,7 +365,10 @@ class Signature(Generic[T]):
 
     kw_only = sorted(self.kwonly.values(), key=lambda a: (has_default(a), get_name(a)))
     ret = "def ("
-    ret += ", ".join([get_desc(arg) for arg in self.pos] + (["*" + get_name(self.varpos)] if self.varpos else (["*"] if self.kwonly else [])) + [get_desc(arg) for arg in kw_only] + (["**" + get_name(self.varkw)] if self.varkw else []))
+    ret += ", ".join([get_desc(arg) for arg in self.pos] + (
+      ["*" + get_name(self.varpos)] if self.varpos else (["*"] if self.kwonly else [])) + [get_desc(arg) for arg in
+                                                                                           kw_only] + (
+                       ["**" + get_name(self.varkw)] if self.varkw else []))
     ret += ")"
     return ret
 
@@ -415,7 +425,8 @@ class Signature(Generic[T]):
       for index, arg in enumerate(args):
         # For positional-only args, we allow overloads to have different names for the same
         # argument. To accomplish this, we just make up a fake index-based name.
-        name = ("__{}".format(index) if arg.variable.name.startswith("__") or assume_positional_only else arg.variable.name)
+        name = (
+          "__{}".format(index) if arg.variable.name.startswith("__") or assume_positional_only else arg.variable.name)
         all_args.setdefault(name, []).append((arg, index))
 
     def get_position(arg_name: str) -> int:
@@ -460,12 +471,15 @@ class Signature(Generic[T]):
     return sig
 
 
-def _verify_signature(stub: Signature[nodes.Argument], runtime: Signature[inspect.Parameter], function_name: str) -> Iterator[str]:
+def _verify_signature(stub: Signature[nodes.Argument], runtime: Signature[inspect.Parameter], function_name: str) -> \
+Iterator[str]:
   # Check positional arguments match up
   for stub_arg, runtime_arg in zip(stub.pos, runtime.pos):
     yield from _verify_arg_name(stub_arg, runtime_arg, function_name)
     yield from _verify_arg_default_value(stub_arg, runtime_arg)
-    if (runtime_arg.kind == inspect.Parameter.POSITIONAL_ONLY and not stub_arg.variable.name.startswith("__") and not stub_arg.variable.name.strip("_") == "self" and not is_dunder(function_name, exclude_special=True)  # noisy for dunder methods
+    if (
+        runtime_arg.kind == inspect.Parameter.POSITIONAL_ONLY and not stub_arg.variable.name.startswith("__") and not stub_arg.variable.name.strip("_") == "self" and not is_dunder(function_name, exclude_special=True)
+    # noisy for dunder methods
     ):
       yield ('stub argument "{}" should be positional-only '
              '(rename with a leading double underscore, i.e. "__{}")'.format(stub_arg.variable.name, runtime_arg.name))
@@ -592,7 +606,8 @@ def verify_var(stub: nodes.Var, runtime: MaybeMissing[Any], object_path: List[st
 
 
 @verify.register(nodes.OverloadedFuncDef)
-def verify_overloadedfuncdef(stub: nodes.OverloadedFuncDef, runtime: MaybeMissing[Any], object_path: List[str]) -> Iterator[Error]:
+def verify_overloadedfuncdef(stub: nodes.OverloadedFuncDef, runtime: MaybeMissing[Any], object_path: List[str]) -> \
+Iterator[Error]:
   if isinstance(runtime, Missing):
     yield Error(object_path, "is not present at runtime", stub, runtime)
     return
@@ -725,7 +740,8 @@ def verify_typealias(stub: nodes.TypeAlias, runtime: MaybeMissing[Any], object_p
 
 
 def is_probably_a_function(runtime: Any) -> bool:
-  return (isinstance(runtime, (types.FunctionType, types.BuiltinFunctionType)) or isinstance(runtime, (types.MethodType, types.BuiltinMethodType)) or (inspect.ismethoddescriptor(runtime) and callable(runtime)))
+  return (isinstance(runtime, (types.FunctionType, types.BuiltinFunctionType)) or isinstance(runtime, (
+  types.MethodType, types.BuiltinMethodType)) or (inspect.ismethoddescriptor(runtime) and callable(runtime)))
 
 
 def safe_inspect_signature(runtime: Any) -> Optional[inspect.Signature]:
@@ -743,11 +759,13 @@ def is_subtype_helper(left: mypy.types.Type, right: mypy.types.Type) -> bool:
   """Checks whether ``left`` is a subtype of ``right``."""
   left = mypy.types.get_proper_type(left)
   right = mypy.types.get_proper_type(right)
-  if (isinstance(left, mypy.types.LiteralType) and isinstance(left.value, int) and left.value in (0, 1) and isinstance(right, mypy.types.Instance) and right.type.fullname == "builtins.bool"):
+  if (isinstance(left, mypy.types.LiteralType) and isinstance(left.value, int) and left.value in (
+  0, 1) and isinstance(right, mypy.types.Instance) and right.type.fullname == "builtins.bool"):
     # Pretend Literal[0, 1] is a subtype of bool to avoid unhelpful errors.
     return True
 
-  if (isinstance(right, mypy.types.TypedDictType) and isinstance(left, mypy.types.Instance) and left.type.fullname == "builtins.dict"):
+  if (
+      isinstance(right, mypy.types.TypedDictType) and isinstance(left, mypy.types.Instance) and left.type.fullname == "builtins.dict"):
     # Special case checks against TypedDicts
     return True
 
@@ -896,7 +914,8 @@ def get_stub(module: str) -> Optional[nodes.MypyFile]:
   return _all_stubs.get(module)
 
 
-def get_typeshed_stdlib_modules(custom_typeshed_dir: Optional[str], version_info: Optional[Tuple[int, int]] = None) -> List[str]:
+def get_typeshed_stdlib_modules(custom_typeshed_dir: Optional[str], version_info: Optional[Tuple[int, int]] = None) -> \
+List[str]:
   """Returns a list of stdlib modules in typeshed (for current Python version)."""
   stdlib_py_versions = mypy.modulefinder.load_stdlib_py_versions(custom_typeshed_dir)
   if version_info is None:
@@ -1032,13 +1051,15 @@ def parse_options(args: List[str]) -> argparse.Namespace:
   parser.add_argument("--concise", action="store_true", help="Makes stubtest's output more concise, one line per error", )
   parser.add_argument("--ignore-missing-stub", action="store_true", help="Ignore errors for stub missing things that are present at runtime", )
   parser.add_argument("--ignore-positional-only", action="store_true", help="Ignore errors for whether an argument should or shouldn't be positional-only", )
-  parser.add_argument("--allowlist", "--whitelist", action="append", metavar="FILE", default=[], help=("Use file as an allowlist. Can be passed multiple times to combine multiple "
-                                                                                                       "allowlists. Allowlists can be created with --generate-allowlist. Allowlists "
-                                                                                                       "support regular expressions."), )
+  parser.add_argument("--allowlist", "--whitelist", action="append", metavar="FILE", default=[], help=(
+    "Use file as an allowlist. Can be passed multiple times to combine multiple "
+    "allowlists. Allowlists can be created with --generate-allowlist. Allowlists "
+    "support regular expressions."), )
   parser.add_argument("--generate-allowlist", "--generate-whitelist", action="store_true", help="Print an allowlist (to stdout) to be used with --allowlist", )
   parser.add_argument("--ignore-unused-allowlist", "--ignore-unused-whitelist", action="store_true", help="Ignore unused allowlist entries", )
-  parser.add_argument("--mypy-config-file", metavar="FILE", help=("Use specified mypy config file to determine mypy plugins "
-                                                                  "and mypy path"), )
+  parser.add_argument("--mypy-config-file", metavar="FILE", help=(
+    "Use specified mypy config file to determine mypy plugins "
+    "and mypy path"), )
   parser.add_argument("--custom-typeshed-dir", metavar="DIR", help="Use the custom typeshed in DIR")
   parser.add_argument("--check-typeshed", action="store_true", help="Check all stdlib modules in typeshed")
 
