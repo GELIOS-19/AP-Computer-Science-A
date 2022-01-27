@@ -25,7 +25,9 @@ import mypy.types
 from mypy import nodes
 from mypy.config_parser import parse_config_file
 from mypy.options import Options
-from mypy.util import FancyFormatter, bytes_to_human_readable_repr, is_dunder, SPECIAL_DUNDERS
+from mypy.util import (
+  FancyFormatter, bytes_to_human_readable_repr, is_dunder, SPECIAL_DUNDERS
+)
 
 
 class Missing:
@@ -50,7 +52,8 @@ def _style(message: str, **kwargs: Any) -> str:
 
 
 class Error:
-  def __init__(self, object_path: List[str], message: str, stub_object: MaybeMissing[nodes.Node], runtime_object: MaybeMissing[Any], *, stub_desc: Optional[str] = None, runtime_desc: Optional[str] = None) -> None:
+  def __init__(self, object_path: List[str], message: str, stub_object: MaybeMissing[nodes.Node], runtime_object: MaybeMissing[Any], *, stub_desc:
+  Optional[str] = None, runtime_desc: Optional[str] = None) -> None:
     """Represents an error found by stubtest.
 
     :param object_path: Location of the object with the error,
@@ -116,7 +119,9 @@ class Error:
     if runtime_file:
       runtime_loc_str += " in file {}".format(Path(runtime_file))
 
-    output = [_style("error: ", color="red", bold=True), _style(self.object_desc, bold=True), " ", self.message, "\n", "Stub:", _style(stub_loc_str, dim=True), "\n", _style(self.stub_desc + "\n", color="blue", dim=True), "Runtime:", _style(runtime_loc_str, dim=True), "\n", _style(self.runtime_desc + "\n", color="blue", dim=True), ]
+    output = [_style("error: ", color="red", bold=True), _style(self.object_desc, bold=True), " ", self.message, "\n", "Stub:",
+              _style(stub_loc_str, dim=True), "\n", _style(self.stub_desc + "\n", color="blue", dim=True), "Runtime:",
+              _style(runtime_loc_str, dim=True), "\n", _style(self.runtime_desc + "\n", color="blue", dim=True), ]
     return "".join(output)
 
 
@@ -182,7 +187,8 @@ def verify_mypyfile(stub: nodes.MypyFile, runtime: MaybeMissing[types.ModuleType
       return obj_mod == r.__name__
     return not isinstance(obj, types.ModuleType)
 
-  runtime_public_contents = (runtime.__all__ if hasattr(runtime, "__all__") else [m for m in dir(runtime) if not m.startswith("_")  # Ensure that the object's module is `runtime`, since in the absence of __all__ we
+  runtime_public_contents = (runtime.__all__ if hasattr(runtime, "__all__") else [m for m in dir(runtime) if
+                                                                                  not m.startswith("_")  # Ensure that the object's module is `runtime`, since in the absence of __all__ we
                                                                                   # don't have a good way to detect re-exports at runtime.
                                                                                   and _belongs_to_runtime(runtime, m)])
   # Check all things declared in module's __all__, falling back to our best guess
@@ -358,7 +364,8 @@ class Signature(Generic[T]):
 
     kw_only = sorted(self.kwonly.values(), key=lambda a: (has_default(a), get_name(a)))
     ret = "def ("
-    ret += ", ".join([get_desc(arg) for arg in self.pos] + (["*" + get_name(self.varpos)] if self.varpos else (["*"] if self.kwonly else [])) + [get_desc(arg) for arg in kw_only] + (["**" + get_name(self.varkw)] if self.varkw else []))
+    ret += ", ".join([get_desc(arg) for arg in self.pos] + (["*" + get_name(self.varpos)] if self.varpos else (["*"] if self.kwonly else [])) + [
+      get_desc(arg) for arg in kw_only] + (["**" + get_name(self.varkw)] if self.varkw else []))
     ret += ")"
     return ret
 
@@ -465,7 +472,9 @@ def _verify_signature(stub: Signature[nodes.Argument], runtime: Signature[inspec
   for stub_arg, runtime_arg in zip(stub.pos, runtime.pos):
     yield from _verify_arg_name(stub_arg, runtime_arg, function_name)
     yield from _verify_arg_default_value(stub_arg, runtime_arg)
-    if (runtime_arg.kind == inspect.Parameter.POSITIONAL_ONLY and not stub_arg.variable.name.startswith("__") and not stub_arg.variable.name.strip("_") == "self" and not is_dunder(function_name, exclude_special=True)# noisy for dunder methods
+    if (
+        runtime_arg.kind == inspect.Parameter.POSITIONAL_ONLY and not stub_arg.variable.name.startswith("__") and not stub_arg.variable.name.strip("_") == "self" and not is_dunder(function_name, exclude_special=True)
+        # noisy for dunder methods
     ):
       yield ('stub argument "{}" should be positional-only '
              '(rename with a leading double underscore, i.e. "__{}")'.format(stub_arg.variable.name, runtime_arg.name))
@@ -725,7 +734,9 @@ def verify_typealias(stub: nodes.TypeAlias, runtime: MaybeMissing[Any], object_p
 
 
 def is_probably_a_function(runtime: Any) -> bool:
-  return (isinstance(runtime, (types.FunctionType, types.BuiltinFunctionType)) or isinstance(runtime, (types.MethodType, types.BuiltinMethodType)) or (inspect.ismethoddescriptor(runtime) and callable(runtime)))
+  return (
+        isinstance(runtime, (types.FunctionType, types.BuiltinFunctionType)) or isinstance(runtime, (types.MethodType, types.BuiltinMethodType)) or (
+        inspect.ismethoddescriptor(runtime) and callable(runtime)))
 
 
 def safe_inspect_signature(runtime: Any) -> Optional[inspect.Signature]:
@@ -743,7 +754,8 @@ def is_subtype_helper(left: mypy.types.Type, right: mypy.types.Type) -> bool:
   """Checks whether ``left`` is a subtype of ``right``."""
   left = mypy.types.get_proper_type(left)
   right = mypy.types.get_proper_type(right)
-  if (isinstance(left, mypy.types.LiteralType) and isinstance(left.value, int) and left.value in (0, 1) and isinstance(right, mypy.types.Instance) and right.type.fullname == "builtins.bool"):
+  if (isinstance(left, mypy.types.LiteralType) and isinstance(left.value, int) and left.value in (
+      0, 1) and isinstance(right, mypy.types.Instance) and right.type.fullname == "builtins.bool"):
     # Pretend Literal[0, 1] is a subtype of bool to avoid unhelpful errors.
     return True
 
@@ -1032,9 +1044,10 @@ def parse_options(args: List[str]) -> argparse.Namespace:
   parser.add_argument("--concise", action="store_true", help="Makes stubtest's output more concise, one line per error", )
   parser.add_argument("--ignore-missing-stub", action="store_true", help="Ignore errors for stub missing things that are present at runtime", )
   parser.add_argument("--ignore-positional-only", action="store_true", help="Ignore errors for whether an argument should or shouldn't be positional-only", )
-  parser.add_argument("--allowlist", "--whitelist", action="append", metavar="FILE", default=[], help=("Use file as an allowlist. Can be passed multiple times to combine multiple "
-                                                                                                       "allowlists. Allowlists can be created with --generate-allowlist. Allowlists "
-                                                                                                       "support regular expressions."), )
+  parser.add_argument("--allowlist", "--whitelist", action="append", metavar="FILE", default=[], help=(
+    "Use file as an allowlist. Can be passed multiple times to combine multiple "
+    "allowlists. Allowlists can be created with --generate-allowlist. Allowlists "
+    "support regular expressions."), )
   parser.add_argument("--generate-allowlist", "--generate-whitelist", action="store_true", help="Print an allowlist (to stdout) to be used with --allowlist", )
   parser.add_argument("--ignore-unused-allowlist", "--ignore-unused-whitelist", action="store_true", help="Ignore unused allowlist entries", )
   parser.add_argument("--mypy-config-file", metavar="FILE", help=("Use specified mypy config file to determine mypy plugins "
