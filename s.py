@@ -48,7 +48,8 @@ class Entity:
     coordinates. """
     diffs = [new_crds[0] - self._crds[0], new_crds[1] - self._crds[1]]
     ang = math.atan2(diffs[1], diffs[0])
-    if int(diffs[0]) != 0 or int(diffs[1]) != 0:
+    if (round(diffs[0]) not in range(-int(self._vel), int(self._vel)) or
+        round(diffs[1]) not in range(-int(self._vel), int(self._vel))):
       self._crds[0] += math.cos(ang) * self._vel
       self._crds[1] += math.sin(ang) * self._vel
 
@@ -59,6 +60,7 @@ class CircleEntity(Entity, ABC):
                crds: [float, float],
                dims: [float, float],
                vel: float) -> None:
+    assert crds[0] == crds[1]
     super().__init__(col, crds, dims, vel)
 
   def draw_frame(self, window) -> None:
@@ -66,20 +68,8 @@ class CircleEntity(Entity, ABC):
     pygame.draw.circle(window, self._col, center_crds, self._dims[0] / 2)
 
 
-def main(*args: [any], **kwargs: {str: any}) -> int:
-  """
-  Called when the program executes.
-
-  Args:
-    args :: [any]:
-      Optional runtime arguments
-    kwargs :: {str: any}:
-      Optional runtime keyword arguments
-
-  Returns:
-     int:
-      Exit code
-  """
+def main() -> int:
+  """ Called when the program executes. """
   # constants
   SCREEN_RESOLUTION = (800, 600)
   SCREEN_TITLE = "Circle Game"
@@ -92,7 +82,7 @@ def main(*args: [any], **kwargs: {str: any}) -> int:
   clock = pygame.time.Clock()
 
   # create game objects
-  my_circle = CircleEntity((0, 0, 0), [100, 100], (30, 30), 1)
+  my_circle = CircleEntity((0, 0, 0), [100, 100], (40, 40), 5)
 
   # game loop
   run_flag = True
