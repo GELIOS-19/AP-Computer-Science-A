@@ -76,14 +76,17 @@ def main() -> int:
   clock = pygame.time.Clock()
 
   # create game objects
-  my_circle = CircleEntity(col=(0, 0, 0), crds=[100, 100], dims=(40, 40), vel=2)
+  my_circles = []
+  for i in range(10):
+    my_circles.append(CircleEntity(col=(0, 0, 0), crds=[100, 100], dims=(40, 40), vel=2))
 
   # game loop
   run_flag = True
   while run_flag:
     # draw objects
-    my_circle.draw_frame(window)
-    my_circle.move_to([400, 300])
+    for my_circle in my_circles:
+      my_circle.draw_frame(window)
+      my_circle.move_to([400, 300])
 
     # update frame
     pygame.display.update()
@@ -96,7 +99,6 @@ def main() -> int:
         run_flag = False
 
   return 0
-
 
 if __name__ == "__main__":
   exit_code = main()
