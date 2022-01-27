@@ -1,19 +1,17 @@
+import abc
 import math
 import sys
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import pygame
 
 
 class Entity(ABC):
-  """ Models an entity which is drawn to the window and can move
-  during runtime. """
+  """ Models an entity which is drawn to the window and can move during
+  runtime. """
 
-  def __init__(self,
-               col: (float, float, float),
-               crds: [float, float],
-               dims: [float, float],
-               vel: float) -> None:
+  def __init__(self, col: (float, float, float), crds: [float, float], dims: [
+    float, float], vel: float) -> None:
     self._crds = crds
     self._dims = dims
     self._vel = vel
@@ -39,33 +37,31 @@ class Entity(ABC):
     """ Returns the height in the vertical direction. """
     return self._dims[1]
 
-  @abstractmethod
+  @abc.abstractmethod
   def draw_frame(self, window) -> None:
     """ Draws the entity for a single frame. """
+    ...
 
   def move_to(self, new_crds: [float, float]) -> None:
     """ Shifts the coordinates of the entity towards new desired
     coordinates. """
     diffs = [new_crds[0] - self._crds[0], new_crds[1] - self._crds[1]]
     ang = math.atan2(diffs[1], diffs[0])
-    if (round(diffs[0]) not in range(-int(self._vel), int(self._vel)) or
-        round(diffs[1]) not in range(-int(self._vel), int(self._vel))):
+    if (round(diffs[0]) not in range(-int(self._vel), int(self._vel)) or round(
+      diffs[1]) not in range(-int(self._vel), int(self._vel))):
       self._crds[0] += math.cos(ang) * self._vel
       self._crds[1] += math.sin(ang) * self._vel
 
 
 class CircleEntity(Entity):
-  def __init__(self,
-               col: (float, float, float),
-               crds: [float, float],
-               dims: [float, float],
-               vel: float) -> None:
+  def __init__(self, col: (float, float, float), crds: [float, float], dims: [
+    float, float], vel: float) -> None:
     assert dims[0] == dims[1]
     super().__init__(col, crds, dims, vel)
 
   def draw_frame(self, window) -> None:
-    """ Overrides the `draw_frame` method. """
-    center_crds = [self._crds[0] + (self._dims[0] / 2), 
+    """ Overrides the `draw_frame` method from the base class. """
+    center_crds = [self._crds[0] + (self._dims[0] / 2),
                    self._crds[1] + (self._dims[1] / 2)]
     pygame.draw.circle(window, self._col, center_crds, self._dims[0] / 2)
 
@@ -84,14 +80,15 @@ def main() -> int:
   clock = pygame.time.Clock()
 
   # create game objects
-  my_circle = CircleEntity((0, 0, 0), [100, 100], (40, 40), 1)
+  my_circle = CircleEntity(col=(0, 0, 0), crds=[100, 100], dims=(
+    40, 40), vel=2)
 
   # game loop
   run_flag = True
   while run_flag:
     # draw objects
     my_circle.draw_frame(window)
-    my_circle.move_to([200, 400])
+    my_circle.move_to([400, 300])
 
     # update frame
     pygame.display.update()
