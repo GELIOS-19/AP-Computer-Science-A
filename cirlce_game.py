@@ -1,94 +1,139 @@
-# Game Dev with PyGame
-
+import abc
 import math
 
 import pygame
 
 
-WINDOW_WIDTH, WINDOW_HEIGT = 800, 600
-FRAMERATE = 60
+# define classes
+class MovableObject(abc.ABC):
+  """ MovableObject is an abstract base class that serves
+  as the foundation for any game object."""
 
-pygame.init()
-window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGT))
-pygame.display.set_caption("Circle War")
-clock = pygame.time.Clock()
+  def __init__(self, coords, velocity):
+    """ Constructor
+    Args:
+      coords :: List[int, int]
+        Represents the screenspace coordinates at which the 
+        game object is drawn.
+      velocity :: int | float
+        Represents the velocity or speed with which the game
+        object moves.
+    """
+    self.coords = coords
+    self.velocity = velocity
+
+  @abc.abstractmethod
+  def draw(self, window):
+    """ Abstract method that draws the game object to a 
+    particular window object for a single frame. This method 
+    should be called inside of the game loop. 
+    Args:
+      window :: pygame.surface.Surface
+        Represents the surface on which the game object is 
+        drawn.
+    """
+    pass  
+
+  def move_to(self, new_coordinates):
+    """ Method that implements logic to move a game object to 
+    any screenspace coordinate.
+    Args:
+      new_coordinates :: Tuple[int, int]
+        Represents the screenspace coordinates to which the 
+        game object moves to. 
+    """
+    nx, ny = new_coordinates
+    x, y = self.coords
+    xdiff = nx - x
+    ydiff = ny - y  
+    angle = math.atan2(ydiff, xdiff)
+    if round(xdiff) != 0 or round(ydiff) != 0:
+      self.coords[0] += math.cos(angle) * self.velocity
+      self.coords[1] += math.sin(angle) * self.velocity
 
 
-class HitBox:
-    COLOR = (255, 0, 0)
+class Player(MovableObject):
+  """ Player is a class that represents the character in the 
+  game which the user controls. This class derives from 
+  MovaleObject. """
 
-    def __init__(self, object_):
-        self.hitbox_x = object_.rectangle_x_position
-        self.hitbox_y = object_.rectangle_y_position
-        self.hitbox_length = object_.rectangle_length
-        self.hitbox_width = object_.rectangle_width
+  def __init__(self, coords, velocity, color, dims):
+    """ Constructor
+    Args:
+      coords :: List[int, int]
+        Represents the screenspace coordinates where the
+        game object will be drawn.
+      velocity :: int | float
+        Represents the velocity with which the player
+        will move.
+      color :: Tuple[int, int, int]
+        Represents the color of the player using RGB format.
+      dims :: List[int, int]
+        Represents the length and width of the player.
+    """
+    # Since pygame draws rectangles with the point of reference
+    # being the top left corner, we need to modify the coords 
+    # parameter by subtracting half the length from the 
+    # x-coordinate and half the width from the y-coordinate.
+    # This will change the point of reference to the center
+    # of the rectangle. This is done to maintain consistancy with 
+    # the way pygame draws circles.
+    coords = [coords[0] - (dims[0] / 2), 
+              coords[1] - (dims[1] / 2)]
+    super(Player, self).__init__(coords, velocity)
+    self.color = color
+    self.dims = dims
 
-    def draw_frame(self, window):
-        pygame.draw.rect(window, self.COLOR, (self.hitbox_x, self.hitbox_y, self.hitbox_length, self.hitbox_width), 1)
+  def draw(self, window):
+    """ Implementation of the abstract draw method from the 
+    MoveableObject base class. Refer to line 32. """
+    pygame.draw.rect(window, self.color, 
+                     self.coords + self.dims)
 
-    def object_in_hitbox(self, object_):
-        pass
 
-class CircleEnemy:
-    def __init__(self, 
-                 initial_x_position: float, 
-                 initial_y_position: float, 
-                 radius: float, 
-                 velocity: float, 
-                 color: (float, float, float)) -> None:
-        self.x_position = initial_x_position
-        self.y_position = initial_y_position
-        self.radius = radius
-        self.velocity = velocity
-        self.color = color
+class Circle(MovableObject):
+  """ Circle is a class that represents a circle. This class
+  derives from MovableObject. """
 
-    # standard attrs
-    @property
-    def rectangle_length(self): return self.radius * 2 
-    @property
-    def rectangle_width(self): return self.radius * 2
-    @property
-    def rectangle_x_position(self): return self.x_position - self.radius
-    @property
-    def rectangle_y_position(self): return self.y_position - self.radius
+  def __init__(self, coords, velocity, color, radius):
+    super(Circle, self).__init__(coords, velocity)
+    self.color = color
+    self.radius = radius
 
-    def draw_frame(self, window: pygame.Surface) -> None:
-        pygame.draw.circle(window, self.color, (self.x_position, self.y_position), self.radius)
+  def draw(self, window):
+    pygame.draw.circle(window, self.color, 
+                       self.coords, self.radius)
 
-    def move_toward(self, x_coordinate: float, y_coordinate: float):
-        # reference unit circle
-        x_difference = x_coordinate - self.x_position
-        y_difference = y_coordinate - self.y_position
-        theta_angle = math.atan2(y_difference, x_difference)
-        if x_difference != 0 or y_difference != 0:
-            self.x_position += math.cos(theta_angle) * self.velocity
-            self.y_position += math.sin(theta_angle) * self.velocity
 
-    @property
-    def hitbox(self):
-        return HitBox(self)
+def main():
+  # contextualize
+  pygame.init()
+  window = pygame.display.set_mode([800, 600])
+  pygame.display.set_caption("Circle War")
+  clock = pygame.time.Clock()
+
+  # make objects
+  circle = Circle([100, 100], 2, (0, 0, 0), 20)
+  player = Player([400, 300], 1, (0, 0, 0), [50, 50])
+
+  # game loop
+  run_flag = True
+  while run_flag:
+    # draw objects
+    circle.draw(window)
+    circle.move_to((400, 300))
+    player.draw(window)
+
+    # update every frame
+    pygame.display.update()
+    window.fill((255, 255, 255))
+    clock.tick(60)
+
+    # check for events
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        run_flag = False
+
 
 if __name__ == "__main__":
-    RUN_FLAG = True # variable true during runtime
-
-    # make objects
-    my_circle = CircleEnemy(100, 100, 50, 1, (255, 255, 255))
-
-    # game loop
-    while RUN_FLAG:
-        # draw objects
-        my_circle.draw_frame(window)
-        my_circle.move_toward(73.23, 392.67)
-        my_circle.hitbox.draw_frame(window)
-
-        # update frame
-        pygame.display.update()
-        window.fill((0, 0, 0))
-        clock.tick(FRAMERATE)
-        
-        # check for events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                RUN_FLAG = False
-
-    quit()
+  main()
