@@ -4,11 +4,11 @@ import math
 import pygame
 
 
-# First, we must write all the class definitions for the 
+# First, we must write all the class definitions for the
 # classes we are planning to use in the program.
 class MovableObject(abc.ABC):
   """ MovableObject is an abstract base class that serves
-  as the foundation for any game object."""
+  as the foundation for any game object. """
 
   def __init__(self, coords, velocity):
     """ Constructor
@@ -33,7 +33,7 @@ class MovableObject(abc.ABC):
         Represents the surface on which the game object is 
         drawn.
     """
-    pass  
+    pass
 
   def move_to(self, new_coordinates):
     """ Method that implements logic to move a game object to 
@@ -41,12 +41,12 @@ class MovableObject(abc.ABC):
     Args:
       new_coordinates :: Tuple[int, int]
         Represents the screenspace coordinates to which the 
-        game object moves to. 
+        game object moves to.
     """
     nx, ny = new_coordinates
     x, y = self.coords
     xdiff = nx - x
-    ydiff = ny - y  
+    ydiff = ny - y
     angle = math.atan2(ydiff, xdiff)
     if round(xdiff) != 0 or round(ydiff) != 0:
       self.coords[0] += math.cos(angle) * self.velocity
@@ -56,7 +56,7 @@ class MovableObject(abc.ABC):
 class Player(MovableObject):
   """ Player is a class that represents the character in the 
   game which the user controls. This class derives from 
-  MovaleObject. """
+  MovableObject. """
 
   def __init__(self, coords, velocity, color, dims):
     """ Constructor
@@ -73,13 +73,13 @@ class Player(MovableObject):
         Represents the length and width of the player.
     """
     # Since pygame draws rectangles with the point of reference
-    # being the top left corner, we need to modify the coords 
+    # being the top left corner, we need to modify the coords
     # parameter by subtracting half the length from the 
     # x-coordinate and half the width from the y-coordinate.
     # This will change the point of reference to the center
-    # of the rectangle. This is done to maintain consistancy 
+    # of the rectangle. This is done to maintain consistency 
     # with the way pygame draws circles.
-    coords = [coords[0] - (dims[0] / 2), 
+    coords = [coords[0] - (dims[0] / 2),
               coords[1] - (dims[1] / 2)]
     super(Player, self).__init__(coords, velocity)
     self.color = color
@@ -87,9 +87,16 @@ class Player(MovableObject):
 
   def draw(self, window):
     """ Player implementation of the abstract draw method 
-    from the MoveableObject base class. Refer to line 32. """
-    pygame.draw.rect(window, self.color, 
+    from the MovableObject base class. Refer to line 32. """
+    pygame.draw.rect(window, self.color,
                      self.coords + self.dims)
+    # Since pygame.draw.line() draws a line with the reference
+    # point as the starting point, the translations done to
+    # self.coords need to be reversed.
+    mc = pygame.mouse.get_pos()
+    origc = [self.coords[0] + (self.dims[0] / 2),
+             self.coords[1] + (self.dims[1] / 2)]
+    pygame.draw.line(window, self.color, origc, mc, 10)
 
 
 class Circle(MovableObject):
@@ -116,8 +123,8 @@ class Circle(MovableObject):
 
   def draw(self, window):
     """ Circle implementation of the abstract draw method 
-    from the MoveableObject base class. Refer to line 32. """
-    pygame.draw.circle(window, self.color, 
+    from the MovableObject base class. Refer to line 32. """
+    pygame.draw.circle(window, self.color,
                        self.coords, self.radius)
 
 
@@ -132,11 +139,11 @@ def main(*args, **kwargs):
   """
   # Before we can start using the pygame library, we must
   # do a few things in order to initialize it. Firstly, we must
-  # call the pygame.init() method in order to initialize the 
+  # call the pygame.init() method in order to initialize the
   # library. Then, we need to set up a window to which our game
-  # will be rendered (we can optionally choose to title the 
+  # will be rendered (we can optionally choose to title the
   # window) Finally, we must set up a clock, which is a timer
-  # that moderates the number of frames drawn per second (we 
+  # that moderates the number of frames drawn per second (we
   # use this because we want the game to run at the same speed
   # on different hardware).
   pygame.init()
@@ -144,17 +151,17 @@ def main(*args, **kwargs):
   pygame.display.set_caption("Circle War")
   clock = pygame.time.Clock()
 
-  # Here, we will instantiate the objects that we want to use 
+  # Here, we will instantiate the objects that we want to use
   # in our game when the game initially starts running.
   circle = Circle([100, 100], 2, (0, 0, 0), 20)
   player = Player([400, 300], 1, (0, 0, 0), [50, 50])
 
-  # This is the start of the game loop, which is a loop that 
+  # This is the start of the game loop, which is a loop that
   # runs throughout the lifetime of the game. Each iteration of
-  # this loop represents a single frame. In this loop, we must 
-  # have three phases: drawing phase, update phase, and event 
-  # phase. The variable run_flag will be True while the loop is 
-  # running. In order to end the loop and stop the game, we 
+  # this loop represents a single frame. In this loop, we must
+  # have three phases: drawing phase, update phase, and event
+  # phase. The variable run_flag will be True while the loop is
+  # running. In order to end the loop and stop the game, we
   # need to set run_flag to False.
   run_flag = True
   while run_flag:
