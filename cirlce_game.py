@@ -1,5 +1,6 @@
 import abc
 import math
+from uncertainties import ufloat
 
 import pygame
 
@@ -42,15 +43,30 @@ class MovableObject(abc.ABC):
       new_coordinates :: Tuple[int, int]
         Represents the screenspace coordinates to which the 
         game object moves to.
+    Returns:
+      bool
+        Indicates if the game object has reached 
+        new_coordinates.
     """
     nx, ny = new_coordinates
     x, y = self.coords
     xdiff = nx - x
     ydiff = ny - y
     angle = math.atan2(ydiff, xdiff)
-    if round(xdiff) != 0 or round(ydiff) != 0:
+    # Since the game object will move in pixel increments of 
+    # self.velocity, we should check if the remaining x and 
+    # y distances are within +/-self.velocity to determine if
+    # the game object has reached the target screenspace
+    # coordinates. If the game object has not reached the 
+    # destination, we need to increment the object's current
+    # x and y position by cos(angle) and sin(angle) 
+    # respectively.
+    if ((xdiff >= self.velocity or xdiff <= -self.velocity) or
+        (ydiff >= self.velocity or ydiff <= -self.velocity)):
       self.coords[0] += math.cos(angle) * self.velocity
       self.coords[1] += math.sin(angle) * self.velocity
+      return False
+    return True
 
 
 class Player(MovableObject):
@@ -167,8 +183,8 @@ def main(*args, **kwargs):
   while run_flag:
     # In the drawing phase, we must draw all the objects we want
     # to show on the subsequent frame.
-    circle.draw(window)
-    player.draw(window)
+    circle_arrived = circle.draw(window)
+    player_arrived = player.draw(window)
 
     # In the update phase, we must make any changes we want to 
     # the attributes of the game objects drawn on the screen.
