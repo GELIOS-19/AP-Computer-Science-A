@@ -1,6 +1,5 @@
 import abc
 import math
-from uncertainties import ufloat
 
 import pygame
 
@@ -48,10 +47,13 @@ class MovableObject(abc.ABC):
         Indicates if the game object has reached 
         new_coordinates.
     """
-    nx, ny = new_coordinates
-    x, y = self.coords
-    xdiff = nx - x
-    ydiff = ny - y
+    # To move the game object to a point, we need to first
+    # determine the angle from the current position to that 
+    # point. This is done by first calculating the x and y
+    # distances to the point, then taking the arctan of the
+    # y distance divided by x distance.
+    xdiff = new_coordinates[0] - self.coords[0]
+    ydiff = new_coordinates[1] - self.coords[1]
     angle = math.atan2(ydiff, xdiff)
     # Since the game object will move in pixel increments of 
     # self.velocity, we should check if the remaining x and 
@@ -91,7 +93,7 @@ class Player(MovableObject):
     # Since pygame draws rectangles with the point of reference
     # being the top left corner, we need to modify the coords
     # parameter by subtracting half the length from the 
-    # x-coordinate and half the width from the y-coordinate.
+    # x coordinate and half the width from the y coordinate.
     # This will change the point of reference to the center
     # of the rectangle. This is done to maintain consistency 
     # with the way pygame draws circles.
@@ -101,6 +103,33 @@ class Player(MovableObject):
     self.color = color
     self.dims = dims
 
+  def _get_termc(self):
+    """ Gets the coordinates at the end of the barrel of the
+    player's gun. 
+    Returns:
+      List[float, float]
+        The coordinates of the point where the player's barrel
+        ends."""
+    mousec = pygame.mouse.get_pos()
+    # Since we want the terminal coordinates with the reference
+    # point as the starting point, the translations done to
+    # self.coords need to be reversed.
+    origc = [self.coords[0] + (self.dims[0] / 2),
+             self.coords[1] + (self.dims[1] / 2)]
+    # Since we want the barrel to be a constant distance, we
+    # need to calculate the points which are a constant
+    # distance from the center of the player. This is done
+    # by calculating the angle from the player's coordinates
+    # to the mouse's coordinates, and then adding the 
+    # player's x and y coordinates with cos(angle) and 
+    # sin(angle) respectively.
+    xdiff = mousec[0] - origc[0]
+    ydiff = mousec[1] - origc[1]
+    angle = math.atan2(ydiff, xdiff)
+    termc = [origc[0] + math.cos(angle) * 100,
+             origc[1] + math.sin(angle) * 100]
+    return termc
+
   def draw(self, window):
     """ Player implementation of the abstract draw method 
     from the MovableObject base class. Refer to line 32. """
@@ -109,10 +138,10 @@ class Player(MovableObject):
     # Since pygame.draw.line() draws a line with the reference
     # point as the starting point, the translations done to
     # self.coords need to be reversed.
-    mc = pygame.mouse.get_pos()
     origc = [self.coords[0] + (self.dims[0] / 2),
              self.coords[1] + (self.dims[1] / 2)]
-    pygame.draw.line(window, self.color, origc, mc, 10)
+    termc = self._get_termc()
+    pygame.draw.line(window, self.color, origc, termc, 10)
 
 
 class Circle(MovableObject):
@@ -183,8 +212,8 @@ def main(*args, **kwargs):
   while run_flag:
     # In the drawing phase, we must draw all the objects we want
     # to show on the subsequent frame.
-    circle_arrived = circle.draw(window)
-    player_arrived = player.draw(window)
+    circle.draw(window)
+    player.draw(window)
 
     # In the update phase, we must make any changes we want to 
     # the attributes of the game objects drawn on the screen.
@@ -193,7 +222,7 @@ def main(*args, **kwargs):
     # need to overwrite the current frame by filling it with a 
     # solid color. Finally, we need to tick our clock to keep 
     # time.
-    circle.move_to((400, 300))
+    circle_arrived = circle.move_to((400, 300))
 
     pygame.display.update()
     window.fill((255, 255, 255))
