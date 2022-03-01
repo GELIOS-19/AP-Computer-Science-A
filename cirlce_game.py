@@ -90,15 +90,6 @@ class Player(MovableObject):
       dims :: List[int, int]
         Represents the length and width of the player.
     """
-    # Since pygame draws rectangles with the point of reference
-    # being the top left corner, we need to modify the coords
-    # parameter by subtracting half the length from the 
-    # x coordinate and half the width from the y coordinate.
-    # This will change the point of reference to the center
-    # of the rectangle. This is done to maintain consistency 
-    # with the way pygame draws circles.
-    coords = [coords[0] - (dims[0] / 2),
-              coords[1] - (dims[1] / 2)]
     super(Player, self).__init__(coords, velocity)
     self.color = color
     self.dims = dims
@@ -111,11 +102,6 @@ class Player(MovableObject):
         The coordinates of the point where the player's barrel
         ends."""
     mousec = pygame.mouse.get_pos()
-    # Since we want the terminal coordinates with the reference
-    # point as the starting point, the translations done to
-    # self.coords need to be reversed.
-    origc = [self.coords[0] + (self.dims[0] / 2),
-             self.coords[1] + (self.dims[1] / 2)]
     # Since we want the barrel to be a constant distance, we
     # need to calculate the points which are a constant
     # distance from the center of the player. This is done
@@ -123,25 +109,30 @@ class Player(MovableObject):
     # to the mouse's coordinates, and then adding the 
     # player's x and y coordinates with cos(angle) and 
     # sin(angle) respectively.
-    xdiff = mousec[0] - origc[0]
-    ydiff = mousec[1] - origc[1]
+    xdiff = mousec[0] - self.coords[0]
+    ydiff = mousec[1] - self.coords[1]
     angle = math.atan2(ydiff, xdiff)
-    termc = [origc[0] + math.cos(angle) * 100,
-             origc[1] + math.sin(angle) * 100]
+    termc = [self.coords[0] + math.cos(angle) * 100,
+             self.coords[1] + math.sin(angle) * 100]
     return termc
 
   def draw(self, window):
     """ Player implementation of the abstract draw method 
     from the MovableObject base class. Refer to line 32. """
+    # Pygame draws rectangles with the point of reference
+    # being the top left corner of the rectangle. Since
+    # self.coords represents the center of the rectangle, 
+    # we need to subtract the x and y portions of 
+    # self.coords with half of the rectangle's x and y
+    # dimensions in order to find the coordinates of the
+    # top left corner.
+    coords = [self.coords[0] - (self.dims[0] / 2),
+              self.coords[1] - (self.dims[1] / 2)]
     pygame.draw.rect(window, self.color,
                      self.coords + self.dims)
-    # Since pygame.draw.line() draws a line with the reference
-    # point as the starting point, the translations done to
-    # self.coords need to be reversed.
-    origc = [self.coords[0] + (self.dims[0] / 2),
-             self.coords[1] + (self.dims[1] / 2)]
     termc = self._get_termc()
-    pygame.draw.line(window, self.color, origc, termc, 10)
+    pygame.draw.line(window, self.color, self.coords, termc, 
+                     10)
 
 
 class Circle(MovableObject):
