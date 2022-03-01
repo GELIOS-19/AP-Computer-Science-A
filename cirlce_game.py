@@ -129,7 +129,7 @@ class Player(MovableObject):
     coords = [self.coords[0] - (self.dims[0] / 2),
               self.coords[1] - (self.dims[1] / 2)]
     pygame.draw.rect(window, self.color,
-                     self.coords + self.dims)
+                     coords + self.dims)
     termc = self._get_termc()
     pygame.draw.line(window, self.color, self.coords, termc, 
                      10)
