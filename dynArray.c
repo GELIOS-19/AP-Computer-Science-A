@@ -39,12 +39,36 @@ void dynArrayRemove(struct dynArray *array, int index)
   array->size--;
 }
 
-// make a foreach loop function that can iterate over the array
+// make a foreach method that can iterate over the array
 void dynArrayForeach(struct dynArray *array, void (*func)(void *)) 
 {
   for (int i = 0; i < array->size; i++) {
     func(array->data[i]);
   }
+}
+
+// make a fiter method that can filter the array
+void dynArrayFilter(struct dynArray *array, int (*func)(void *)) 
+{
+  for (int i = 0; i < array->size; i++) {
+    if (func(array->data[i])) {
+      dynArrayRemove(array, i);
+      i--;
+    }
+  }
+}
+
+// make a filter method that return all the matching elements in a new dynArray
+struct dynArray *dynArrayFilterReturn(struct dynArray *array, int (*func)(void *)) 
+{
+  struct dynArray *newArray = malloc(sizeof(struct dynArray));
+  dynArrayInit(newArray);
+  for (int i = 0; i < array->size; i++) {
+    if (func(array->data[i])) {
+      dynArrayAdd(newArray, array->data[i]);
+    }
+  }
+  return newArray;
 }
 
 // make a struct to represent an animal
@@ -84,4 +108,19 @@ int main(void)
 
   // print each animal
   dynArrayForeach(&animals, (void (*)(void *)) animalPrint);
+
+  // write a function to determine if an animal is a dog
+  int animalIsDog(void *animal) 
+  {
+    struct animal *a = (struct animal *) animal;
+    return strcmp(a->name, "dog") == 0;
+  }
+
+  // get a new array with only the dogs
+  struct dynArray *dogs = dynArrayFilterReturn(&animals, (void *(*)(void *))animalIsDog);
+
+  // print each dog
+  dynArrayForeach(dogs, (void (*)(void *)) animalPrint);
+
+  return 0;
 }
