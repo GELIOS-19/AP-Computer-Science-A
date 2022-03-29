@@ -10,7 +10,7 @@ for i in range(N):
     cnsts.append((cnst[0], cnst[1]))
 
 # make adjacency matrix for cows
-cows_adj = [[],[],[],[],[],[],[],[]]
+cows_adj = [[], [], [], [], [], [], [], []]
 for cnst in cnsts:
     cows_adj[cows.index(cnst[0])].append(cnst[1])
     cows_adj[cows.index(cnst[1])].append(cnst[0])
