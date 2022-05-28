@@ -12,10 +12,14 @@ mass_vs_spring_length = {
 
 natural_spring_length = 6.3
 
+ACCEL_DUE_TO_GRAV = 9.81
+
 
 def main():
     # Format data
-    y = np.array([(m / 1000) * 9.81 for m in mass_vs_spring_length.keys()])
+    y = np.array(
+        [(m / 1000) * ACCEL_DUE_TO_GRAV for m in mass_vs_spring_length.keys()]
+    )
     x = np.array(
         [
             (l / 100) - (natural_spring_length / 100)
