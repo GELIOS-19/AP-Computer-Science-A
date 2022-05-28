@@ -16,8 +16,12 @@ natural_spring_length = 6.3
 def main():
     # Format data
     y = np.array([(m / 1000) * 9.81 for m in mass_vs_spring_length.keys()])
-    x = np.array([(l / 100) - (natural_spring_length / 100)
-                  for l in mass_vs_spring_length.values()])
+    x = np.array(
+        [
+            (l / 100) - (natural_spring_length / 100)
+            for l in mass_vs_spring_length.values()
+        ]
+    )
 
     # create the plot
     plot = plt.figure(dpi=1200, figsize=(10, 5))
@@ -33,8 +37,11 @@ def main():
     anns = []
     for x_coord, y_coord in zip(x, y):
         anns.append(
-            subplot.annotate(f"({x_coord:.2} m, {y_coord:.2} N)",
-                             xy=(x_coord + (3 / 1000), y_coord - (25 / 1000))))
+            subplot.annotate(
+                f"({x_coord:.2} m, {y_coord:.2} N)",
+                xy=(x_coord + (3 / 1000), y_coord - (25 / 1000))
+            )
+        )
     # save without trend line
     plt.savefig("without_trend_line.png")
 
