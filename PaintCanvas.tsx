@@ -5,7 +5,6 @@ import {
   PanResponder,
   GestureResponderEvent,
   PanResponderGestureState,
-  Animated,
   LayoutRectangle,
 } from "react-native";
 import Svg, { G, Path, Circle } from "react-native-svg";
@@ -18,11 +17,11 @@ interface PaintCanvasProps {
 }
 
 const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
-  let [points, setPoints] = useState<{ x: number, y: number }[]>([]);
+  let [points, setPoints] = useState<{ x: number; y: number }[]>([]);
   const [paths, setPaths] = useState<JSX.Element[]>([]);
 
   const pointsToSvgConverter = new _PointsToSvgConverter();
-  
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: (
@@ -67,7 +66,7 @@ const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
           );
         } else if (points.length === 1) {
           newPaths.push(
-            <Circle 
+            <Circle
               cx={pointsToSvgConverter.pointToSvgCircle(points[0]).x}
               cy={pointsToSvgConverter.pointToSvgCircle(points[0]).y}
               r={`${props.strokeSize}`}
@@ -83,9 +82,7 @@ const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
 
   return (
     <View
-      onLayout={(e) =>
-        pointsToSvgConverter.setOffsets(e.nativeEvent.layout)
-      }
+      onLayout={(e) => pointsToSvgConverter.setOffsets(e.nativeEvent.layout)}
       style={styles.paintContainer}
     >
       <View {...panResponder.panHandlers}>
@@ -123,9 +120,13 @@ class _PointsToSvgConverter {
 
   pointsToSvgPath(points: { x: number; y: number }[]): string {
     if (points.length > 0) {
-      let path = `M ${points[0].x - this._offsetX} ${points[0].y - this._offsetY} `;
+      let path = `M ${points[0].x - this._offsetX} ${
+        points[0].y - this._offsetY
+      } `;
       points.forEach((point: { x: number; y: number }) => {
-        path = `${path} L ${point.x - this._offsetX} ${point.y - this._offsetY} `;
+        path = `${path} L ${point.x - this._offsetX} ${
+          point.y - this._offsetY
+        } `;
       });
       return path;
     } else {
@@ -133,7 +134,7 @@ class _PointsToSvgConverter {
     }
   }
 
-  pointToSvgCircle(point: { x: number, y: number }): { x: string, y: string } {
+  pointToSvgCircle(point: { x: number; y: number }): { x: string; y: string } {
     return { x: `${point.x - this._offsetX}`, y: `${point.y - this._offsetY}` };
   }
 }
