@@ -8,7 +8,7 @@ import {
   Animated,
   LayoutRectangle,
 } from "react-native";
-import Svg, { G, Path } from "react-native-svg";
+import Svg, { G, Path, Circle } from "react-native-svg";
 
 interface PaintCanvasProps {
   width: number;
@@ -18,10 +18,10 @@ interface PaintCanvasProps {
 }
 
 const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
-  const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
+  let [points, setPoints] = useState<{ x: number, y: number }[]>([]);
   const [paths, setPaths] = useState<JSX.Element[]>([]);
 
-  const pointsToSvgPathConverter = new _PointsToSvgPathConverter();
+  const pointsToSvgConverter = new _PointsToSvgConverter();
   
   const panResponder = useRef(
     PanResponder.create({
@@ -56,18 +56,27 @@ const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
         gestureState: PanResponderGestureState
       ) => {
         const newPaths = paths;
-        if (points.length > 0) {
+        if (points.length > 1) {
           newPaths.push(
             <Path
-              d={pointsToSvgPathConverter.pointsToSvgPath(points)}
+              d={pointsToSvgConverter.pointsToSvgPath(points)}
               stroke={props.color}
               strokeWidth={props.strokeSize}
               fill="none"
             />
           );
+        } else if (points.length === 1) {
+          newPaths.push(
+            <Circle 
+              cx={pointsToSvgConverter.pointToSvgCircle(points[0]).x}
+              cy={pointsToSvgConverter.pointToSvgCircle(points[0]).y}
+              r={`${props.strokeSize}`}
+              fill={props.color}
+            />
+          );
         }
-        setPoints([]);
-        setPaths(paths);
+        points = [];
+        setPoints(points);
       },
     })
   ).current;
@@ -75,11 +84,11 @@ const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
   return (
     <View
       onLayout={(e) =>
-        pointsToSvgPathConverter.setOffsets(e.nativeEvent.layout)
+        pointsToSvgConverter.setOffsets(e.nativeEvent.layout)
       }
       style={styles.paintContainer}
     >
-      <Animated.View {...panResponder.panHandlers}>
+      <View {...panResponder.panHandlers}>
         <Svg
           style={styles.paintSurface}
           width={props.width}
@@ -87,7 +96,7 @@ const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
         >
           <G>{paths}</G>
         </Svg>
-      </Animated.View>
+      </View>
     </View>
   );
 };
@@ -103,7 +112,7 @@ const styles = StyleSheet.create({
   },
 });
 
-class _PointsToSvgPathConverter {
+class _PointsToSvgConverter {
   _offsetX: number = 0;
   _offsetY: number = 0;
 
@@ -122,6 +131,10 @@ class _PointsToSvgPathConverter {
     } else {
       return "";
     }
+  }
+
+  pointToSvgCircle(point: { x: number, y: number }): { x: string, y: string } {
+    return { x: `${point.x - this._offsetX}`, y: `${point.y - this._offsetY}` };
   }
 }
 
