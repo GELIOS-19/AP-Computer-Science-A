@@ -40,9 +40,20 @@ class PaintCanvas extends Component<PaintCanvasProps, PaintCanvasState> {
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (e: GestureResponderEvent) => {
       const newPoints = this.state.points;
+      const newIntermediatePaths = this.state.intermediatePaths;
       
       const [x, y] = [e.nativeEvent.pageX, e.nativeEvent.pageY];
       newPoints.push({ x, y });
+
+      newIntermediatePaths.push(
+        <Circle 
+          cx={`${this._pointsToSvgConverter
+            .pointToSvgCircle(this.state.points[0]).x}`}
+          cy={`${this._pointsToSvgConverter
+            .pointToSvgCircle(this.state.points[0]).y}`}
+          r={`${this.props.strokeSize / 2}`}
+        />
+      );
       
       this.setState({ points: newPoints });
     },
@@ -72,14 +83,39 @@ class PaintCanvas extends Component<PaintCanvasProps, PaintCanvasState> {
     onPanResponderRelease: () => {
       const newFinalPaths = this.state.finalPaths;
 
-      newFinalPaths.push(
-        <Path
-          d={this._pointsToSvgConverter.pointsToSvgPath(this.state.points)}
-          stroke={this.props.color}
-          strokeWidth={this.props.strokeSize}
-          fill='none'
-        />
-      );
+      if (this.state.points.length > 1) {
+        newFinalPaths.push(
+          <Path
+            d={this._pointsToSvgConverter.pointsToSvgPath(this.state.points)}
+            stroke={this.props.color}
+            strokeWidth={this.props.strokeSize}
+            fill='none'
+          />
+        );
+      }
+
+      if (this.state.points.length > 0) {
+        newFinalPaths.push(
+          <Circle 
+            cx={`${this._pointsToSvgConverter
+              .pointToSvgCircle(this.state.points[0]).x}`}
+            cy={`${this._pointsToSvgConverter
+              .pointToSvgCircle(this.state.points[0]).y}`}
+            r={`${this.props.strokeSize / 2}`}
+          />
+        );
+        newFinalPaths.push(
+          <Circle 
+            cx={`${this._pointsToSvgConverter
+              .pointToSvgCircle(this.state.points[this.state.points.length - 1])
+                .x}`}
+            cy={`${this._pointsToSvgConverter
+              .pointToSvgCircle(this.state.points[this.state.points.length - 1])
+                .y}`}
+            r={`${this.props.strokeSize / 2}`}
+          />
+        );
+      }
 
       this.setState({
         points: [], 
@@ -133,9 +169,9 @@ class _PointsToSvgConverter {
 
   pointsToSvgPath(points: { x: number; y: number }[]): string {
     if (points.length > 0) {
-      let path = `M ${points[0].x - this._offsetX} ${points[0].y - this._offsetY} `;
+      let path = `M ${points[0].x - this._offsetX}, ${points[0].y - this._offsetY} S`;
       points.forEach((point: { x: number; y: number }) => {
-        path = `${path} L ${point.x - this._offsetX} ${point.y - this._offsetY} `;
+        path = `${path} ${point.x - this._offsetX}, ${point.y - this._offsetY} `;
       });
       return path;
     } else {
