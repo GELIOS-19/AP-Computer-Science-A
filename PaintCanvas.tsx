@@ -1,111 +1,124 @@
-import React, { useRef, useState } from "react";
+import React, { Component } from 'react';
 import {
   StyleSheet,
   View,
   PanResponder,
   GestureResponderEvent,
-  PanResponderGestureState,
   LayoutRectangle,
-} from "react-native";
-import Svg, { G, Path, Circle } from "react-native-svg";
+  LayoutChangeEvent,
+} from 'react-native';
+import Svg, { G, Path, Circle } from 'react-native-svg';
 
-interface PaintCanvasProps {
+type PaintCanvasProps = {
   width: number;
   height: number;
   color: string;
   strokeSize: number;
+};
+
+type PaintCanvasState = {
+  points: { x: number; y: number }[];
+  intermediatePaths: JSX.Element[];
+  finalPaths: JSX.Element[];
 }
 
-const PaintCanvas = (props: PaintCanvasProps): JSX.Element => {
-  let [points, setPoints] = useState<{ x: number; y: number }[]>([]);
-  const [paths, setPaths] = useState<JSX.Element[]>([]);
+class PaintCanvas extends Component<PaintCanvasProps, PaintCanvasState> {
+  constructor(props: PaintCanvasProps) {
+    super(props);
+  }
 
-  const pointsToSvgConverter = new _PointsToSvgConverter();
+  state: PaintCanvasState = {
+    points: [],
+    intermediatePaths: [],
+    finalPaths: []
+  }
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: (
-        e: GestureResponderEvent,
-        gestureState: PanResponderGestureState
-      ) => true,
-      onMoveShouldSetPanResponder: (
-        e: GestureResponderEvent,
-        gestureState: PanResponderGestureState
-      ) => true,
-      onPanResponderGrant: (
-        e: GestureResponderEvent,
-        gestureState: PanResponderGestureState
-      ) => {
-        const [x, y] = [e.nativeEvent.pageX, e.nativeEvent.pageY];
-        const newPoints = points;
-        newPoints.push({ x, y });
-        setPoints(newPoints);
-      },
-      onPanResponderMove: (
-        e: GestureResponderEvent,
-        gestureState: PanResponderGestureState
-      ) => {
-        const [x, y] = [e.nativeEvent.pageX, e.nativeEvent.pageY];
-        const newPoints = points;
-        newPoints.push({ x, y });
-        setPoints(newPoints);
-      },
-      onPanResponderRelease: (
-        e: GestureResponderEvent,
-        gestureState: PanResponderGestureState
-      ) => {
-        const newPaths = paths;
-        if (points.length > 1) {
-          newPaths.push(
-            <Path
-              d={pointsToSvgConverter.pointsToSvgPath(points)}
-              stroke={props.color}
-              strokeWidth={props.strokeSize}
-              fill="none"
-            />
-          );
-        } else if (points.length === 1) {
-          newPaths.push(
-            <Circle
-              cx={pointsToSvgConverter.pointToSvgCircle(points[0]).x}
-              cy={pointsToSvgConverter.pointToSvgCircle(points[0]).y}
-              r={`${props.strokeSize}`}
-              fill={props.color}
-            />
-          );
-        }
-        points = [];
-        setPoints(points);
-      },
-    })
-  ).current;
+  _pointsToSvgConverter = new _PointsToSvgConverter();
+  
+  _panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (e: GestureResponderEvent) => {
+      const newPoints = this.state.points;
+      
+      const [x, y] = [e.nativeEvent.pageX, e.nativeEvent.pageY];
+      newPoints.push({ x, y });
+      
+      this.setState({ points: newPoints });
+    },
+    onPanResponderMove: (e: GestureResponderEvent) => {
+      const newPoints = this.state.points;
+      const newIntermediatePaths = this.state.intermediatePaths;
 
-  return (
-    <View
-      onLayout={(e) => pointsToSvgConverter.setOffsets(e.nativeEvent.layout)}
-      style={styles.paintContainer}
-    >
-      <View {...panResponder.panHandlers}>
-        <Svg
-          style={styles.paintSurface}
-          width={props.width}
-          height={props.height}
-        >
-          <G>{paths}</G>
-        </Svg>
+      const [x, y] = [e.nativeEvent.pageX, e.nativeEvent.pageY];
+      newPoints.push({ x, y });
+
+      if (this.state.points.length > 1) {
+        newIntermediatePaths.push(
+          <Path
+            d={this._pointsToSvgConverter.pointsToSvgPath(this.state.points)}
+            stroke={this.props.color}
+            strokeWidth={this.props.strokeSize}
+            fill='none'
+          />
+        );
+      } 
+
+      this.setState({
+        points: newPoints, 
+        intermediatePaths: newIntermediatePaths
+      });
+    },
+    onPanResponderRelease: () => {
+      const newFinalPaths = this.state.finalPaths;
+
+      newFinalPaths.push(
+        <Path
+          d={this._pointsToSvgConverter.pointsToSvgPath(this.state.points)}
+          stroke={this.props.color}
+          strokeWidth={this.props.strokeSize}
+          fill='none'
+        />
+      );
+
+      this.setState({
+        points: [], 
+        intermediatePaths: [], 
+        finalPaths: newFinalPaths
+      });
+    },
+  })
+
+  render() {
+    return (
+      <View
+        onLayout={(e: LayoutChangeEvent) => 
+          this._pointsToSvgConverter.setOffsets(e.nativeEvent.layout)}
+        style={styles.paintContainer}
+      >
+        <View {...this._panResponder.panHandlers}>
+          <Svg
+            style={styles.paintSurface}
+            width={this.props.width}
+            height={this.props.height}
+          >
+            <G>{this.state.intermediatePaths}</G>
+            <G>{this.state.finalPaths}</G>
+          </Svg>
+        </View>
       </View>
-    </View>
-  );
+    );
+  }
 };
 
 const styles = StyleSheet.create({
   paintContainer: {
     borderWidth: 0.5,
-    borderColor: "#DDDDDD",
+    borderColor: '#DDDDDD',
   },
 
   paintSurface: {
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
 });
 
@@ -120,17 +133,13 @@ class _PointsToSvgConverter {
 
   pointsToSvgPath(points: { x: number; y: number }[]): string {
     if (points.length > 0) {
-      let path = `M ${points[0].x - this._offsetX} ${
-        points[0].y - this._offsetY
-      } `;
+      let path = `M ${points[0].x - this._offsetX} ${points[0].y - this._offsetY} `;
       points.forEach((point: { x: number; y: number }) => {
-        path = `${path} L ${point.x - this._offsetX} ${
-          point.y - this._offsetY
-        } `;
+        path = `${path} L ${point.x - this._offsetX} ${point.y - this._offsetY} `;
       });
       return path;
     } else {
-      return "";
+      return '';
     }
   }
 
