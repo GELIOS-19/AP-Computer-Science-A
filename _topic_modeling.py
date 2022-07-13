@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 sh = logging.StreamHandler()
 sh.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-)
+    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
 logger.addHandler(sh)
 
 
 class WikipediaTopicModel:
-    def __init__(
-        self, num_documents_trained: int, embedding_model: str = "doc2vec"
-    ):
+
+    def __init__(self,
+                 num_documents_trained: int,
+                 embedding_model: str = "doc2vec"):
         # Create pandas DataFrame
         self._df = WikipediaTopicModel._create_df(
             num_documents_trained,
@@ -40,14 +40,14 @@ class WikipediaTopicModel:
 
     @staticmethod
     def _create_df(
-        num_documents: int,
-        df_pickle_location: str = "data/data_frame.pkl"
-    ) -> pd.DataFrame:
+            num_documents: int,
+            df_pickle_location: str = "data/data_frame.pkl") -> pd.DataFrame:
+
         def trim_document_to_punctuation(
-            document: str,
-            num_words: int,
-            punctuation: List[str] = [".", "!", "?"]
-        ) -> str:
+                document: str,
+                num_words: int,
+                punctuation: List[str] = [".", "!", "?"]) -> str:
+
             def contains_any(document: str, characters: List[str]) -> bool:
                 contains = []
                 for character in characters:
@@ -66,9 +66,8 @@ class WikipediaTopicModel:
                 deviation_down = num_words - pointer_down
                 trimmed_document = ""
                 if deviation_up > deviation_down:
-                    trimmed_document = " ".join(
-                        split_document[:pointer_down + 1]
-                    )
+                    trimmed_document = " ".join(split_document[:pointer_down +
+                                                               1])
                 else:
                     trimmed_document = " ".join(split_document[:pointer_up + 1])
                 return trimmed_document
@@ -84,13 +83,11 @@ class WikipediaTopicModel:
         df = pd.DataFrame(
             # Use the first num_documents documents. Random samples are too
             # memory expensive
-            load_dataset("wikipedia", "20220301.en")["train"][:num_documents]
-        )
+            load_dataset("wikipedia", "20220301.en")["train"][:num_documents])
         # Trim the documents
         logger.info("Trimming documents")
         df["text"] = df["text"].apply(
-            lambda document: trim_document_to_punctuation(document, 50)
-        )
+            lambda document: trim_document_to_punctuation(document, 50))
         # Save the DataFrame
         logger.info("Saving pandas DataFrame")
         df.to_pickle(df_pickle_location)
@@ -125,57 +122,47 @@ class WikipediaTopicModel:
             embeddings_2 = self._topic_model._embed_query(document_2)
         except AttributeError:
             # Tokenize each document
-            tokenized_document_1 = simple_preprocess(
-                strip_tags(document_1), deacc=True
-            )
-            tokenized_document_2 = simple_preprocess(
-                strip_tags(document_2), deacc=True
-            )
+            tokenized_document_1 = simple_preprocess(strip_tags(document_1),
+                                                     deacc=True)
+            tokenized_document_2 = simple_preprocess(strip_tags(document_2),
+                                                     deacc=True)
             # Calculate the embeddings for each document
             embeddings_1 = self._topic_model.model.infer_vector(
                 doc_words=tokenized_document_1,
                 alpha=0.025,
                 min_alpha=0.01,
-                epochs=100
-            )
+                epochs=100)
             embeddings_2 = self._topic_model.model.infer_vector(
                 doc_words=tokenized_document_2,
                 alpha=0.025,
                 min_alpha=0.01,
-                epochs=100
-            )
+                epochs=100)
         # Calculate the cosine similarity with the document embeddings
-        cos_similarity = np.dot(
-            embeddings_1, embeddings_2
-        ) / (np.linalg.norm(embeddings_1) * np.linalg.norm(embeddings_2))
+        cos_similarity = np.dot(embeddings_1, embeddings_2) / (
+            np.linalg.norm(embeddings_1) * np.linalg.norm(embeddings_2))
         return cos_similarity
 
     def get_topics(self, document: str, num_topics: int = 5) -> List[str]:
         """Gets the closest topics for a given document."""
         if num_topics > 50:
             raise ValueError(
-                "Number of topics must be less than or equal to 50"
-            )
+                "Number of topics must be less than or equal to 50")
         topics = list(
-            self._topic_model.query_topics(document, 50)[0][0][:num_topics]
-        )
+            self._topic_model.query_topics(document, 50)[0][0][:num_topics])
         return topics
 
-    def topics_are_similar(
-        self, topic_words1: List[str], topic_words2: List[str], threshold: float
-    ) -> bool:
+    def topics_are_similar(self, topic_words1: List[str],
+                           topic_words2: List[str], threshold: float) -> bool:
         """Returns True if the average cosine distance between the pairs of
         topics in topic_words1 and topic_words2 is greater than a threshold."""
         if len(topic_words1) != len(topic_words2):
             raise ValueError(
-                "Both lists of topic words do not have the same length"
-            )
+                "Both lists of topic words do not have the same length")
         # Calculate cosine similarities for each pair of topic words
         cos_similarities = []
         for i in range(len(topic_words1)):
             cos_similarities.append(
-                self.get_cos_similarity(topic_words1[i], topic_words2[i])
-            )
+                self.get_cos_similarity(topic_words1[i], topic_words2[i]))
         # Calculate the average cosine similarity
         cos_similarity_avg = sum(cos_similarities) / len(cos_similarities)
         # The topic words are similar if the average cosine similarity exceeds
@@ -199,22 +186,18 @@ class WikipediaTopicModel:
             topics1 = self.get_topics(cluster)
             topics2 = self.get_topics(line)
             topics_are_similar_, _ = self.topics_are_similar(
-                topics1, topics2, threshold
-            )
+                topics1, topics2, threshold)
             # Modify the current cluster
             if not topics_are_similar_:
                 clusters_to_topics.append(
-                    (cluster, ", ".join(self.get_topics(cluster)))
-                )
+                    (cluster, ", ".join(self.get_topics(cluster))))
                 cluster = line + " "
             else:
                 cluster += line + " "
             if line == lines[-1]:
                 clusters_to_topics.append(
-                    (cluster, ", ".join(self.get_topics(cluster)))
-                )
-        clusters_to_topics = [
-            (cluster, topics)
-            for cluster, topics in clusters_to_topics if cluster != ""
-        ]
+                    (cluster, ", ".join(self.get_topics(cluster))))
+        clusters_to_topics = [(cluster, topics)
+                              for cluster, topics in clusters_to_topics
+                              if cluster != ""]
         return clusters_to_topics
