@@ -2,7 +2,7 @@ from collections import OrderedDict
 import logging
 from os.path import exists
 import re
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from datasets import load_dataset
 from gensim.parsing.preprocessing import strip_tags
@@ -21,9 +21,11 @@ logger.addHandler(sh)
 
 class WikipediaTopicModel:
 
+  __slots__ = ("_df", "_topic_model")
+
   def __init__(self,
                num_documents_trained: int,
-               embedding_model: str = "doc2vec"):
+               embedding_model: str = "doc2vec") -> None:
     # Create pandas DataFrame
     self._df = WikipediaTopicModel._create_df(
         num_documents_trained,
@@ -42,9 +44,8 @@ class WikipediaTopicModel:
       df_pickle_location: str = "data/data_frame.pkl") -> pd.DataFrame:
 
     def trim_document_to_punctuation(
-        document: str,
-        num_words: int,
-        punctuation: List[str] = [".", "!", "?"]) -> str:
+        document: str, num_words: int,
+        punctuation: List[str] = ".!?".split("")) -> str:
 
       def contains_any(document: str, characters: List[str]) -> bool:
         contains = []
@@ -146,17 +147,17 @@ class WikipediaTopicModel:
         self._topic_model.query_topics(document, 50)[0][0][:num_topics])
     return topics
 
-  def topics_are_similar(self, topic_words1: List[str], topic_words2: List[str],
-                         threshold: float) -> bool:
+  def topics_are_similar(self, topic_words_1: List[str],
+                         topic_words_2: List[str], threshold: float) -> bool:
     """Returns True if the average cosine distance between the pairs of topics 
     in topic_words1 and topic_words2 is greater than a threshold."""
-    if len(topic_words1) != len(topic_words2):
+    if len(topic_words_1) != len(topic_words_2):
       raise ValueError("Both lists of topic words do not have the same length")
     # Calculate cosine similarities for each pair of topic words
     cos_similarities = []
-    for i in range(len(topic_words1)):
+    for i in range(len(topic_words_1)):
       cos_similarities.append(
-          self.get_cos_similarity(topic_words1[i], topic_words2[i]))
+          self.get_cos_similarity(topic_words_1[i], topic_words_2[i]))
     # Calculate the average cosine similarity
     cos_similarity_avg = sum(cos_similarities) / len(cos_similarities)
     # The topic words are similar if the average cosine similarity exceeds
@@ -165,10 +166,10 @@ class WikipediaTopicModel:
 
   def get_topic_clusters(self,
                          document: str,
-                         threshold: float = 0.22) -> Dict[str, str]:
+                         threshold: float = 0.22) -> List[Tuple[str, str]]:
     """Gets a dictionary which maps different topics in the document to their 
     corresponding parts in the document."""
-    clusters_to_topics = []
+    clusters_to_topics: List[Tuple[str, str]] = []
     # Split the document into lines
     lines = re.split("\.|\n", document)
     lines = [line.strip() + "." for line in lines if line != ""]
@@ -177,9 +178,9 @@ class WikipediaTopicModel:
     for line in lines:
       # Get the topics for each line and the current cluster, and whether or not
       # the topics are similar
-      topics1 = self.get_topics(cluster)
-      topics2 = self.get_topics(line)
-      topics_are_similar_, _ = self.topics_are_similar(topics1, topics2,
+      topics_1 = self.get_topics(cluster)
+      topics_2 = self.get_topics(line)
+      topics_are_similar_, _ = self.topics_are_similar(topics_1, topics_2,
                                                        threshold)
       # Modify the current cluster
       if not topics_are_similar_:
