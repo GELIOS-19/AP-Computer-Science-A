@@ -78,8 +78,8 @@ class WikipediaTopicModel:
     # Create pandas DataFrame
     logger.info("Creating Pandas DataFrame")
     df = pd.DataFrame(
-        # Use the first num_documents documents. Random samples are too
-        # memory expensive
+        # Use the first num_documents documents. Random samples are too memory
+        # expensive
         load_dataset("wikipedia", "20220301.en")["train"][:num_documents])
     # Trim the documents
     logger.info("Trimming documents")
@@ -112,8 +112,8 @@ class WikipediaTopicModel:
     """Gets the cosine similarity for 2 documents."""
     # Get the embeddings for each document
     try:
-      # Try to use _embed_query, which only works if topic model's
-      # embedding model is not doc2vec
+      # Try to use _embed_query, which only works if topic model's embedding
+      # model is not doc2vec
       embeddings_1 = self._topic_model._embed_query(document_1)
       embeddings_2 = self._topic_model._embed_query(document_2)
     except AttributeError:
@@ -148,8 +148,8 @@ class WikipediaTopicModel:
 
   def topics_are_similar(self, topic_words1: List[str], topic_words2: List[str],
                          threshold: float) -> bool:
-    """Returns True if the average cosine distance between the pairs of
-        topics in topic_words1 and topic_words2 is greater than a threshold."""
+    """Returns True if the average cosine distance between the pairs of topics 
+    in topic_words1 and topic_words2 is greater than a threshold."""
     if len(topic_words1) != len(topic_words2):
       raise ValueError("Both lists of topic words do not have the same length")
     # Calculate cosine similarities for each pair of topic words
@@ -166,8 +166,8 @@ class WikipediaTopicModel:
   def get_topic_clusters(self,
                          document: str,
                          threshold: float = 0.22) -> Dict[str, str]:
-    """Gets a dictionary which maps different topics in the document to
-        their corresponding parts in the document."""
+    """Gets a dictionary which maps different topics in the document to their 
+    corresponding parts in the document."""
     clusters_to_topics = []
     # Split the document into lines
     lines = re.split("\.|\n", document)
@@ -175,8 +175,8 @@ class WikipediaTopicModel:
     # Create clusters
     cluster = ""
     for line in lines:
-      # Get the topics for each line and the current cluster, and whether
-      # or not the topics are similar
+      # Get the topics for each line and the current cluster, and whether or not
+      # the topics are similar
       topics1 = self.get_topics(cluster)
       topics2 = self.get_topics(line)
       topics_are_similar_, _ = self.topics_are_similar(topics1, topics2,
